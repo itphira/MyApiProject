@@ -1,7 +1,7 @@
 {
   "Files": [
     {
-      "Id": "C:\\Users\\it.soporte\\source\\repos\\MyApiProject\\MyApiProject\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\MyApiProject.bundle.scp.css",
+      "Id": "C:\\Users\\it.soporte\\source\\repos\\MyApiProject\\MyApiProject\\obj\\Release\\net8.0\\scopedcss\\projectbundle\\MyApiProject.bundle.scp.css",
       "PackagePath": "staticwebassets\\MyApiProject.bundle.scp.css"
     },
     {
@@ -245,19 +245,19 @@
       "PackagePath": "staticwebassets\\lib\\jquery\\dist\\jquery.min.map"
     },
     {
-      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.MyApiProject.Microsoft.AspNetCore.StaticWebAssets.props",
+      "Id": "obj\\Release\\net8.0\\staticwebassets\\msbuild.MyApiProject.Microsoft.AspNetCore.StaticWebAssets.props",
       "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
     },
     {
-      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.MyApiProject.props",
+      "Id": "obj\\Release\\net8.0\\staticwebassets\\msbuild.build.MyApiProject.props",
       "PackagePath": "build\\MyApiProject.props"
     },
     {
-      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.MyApiProject.props",
+      "Id": "obj\\Release\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.MyApiProject.props",
       "PackagePath": "buildMultiTargeting\\MyApiProject.props"
     },
     {
-      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.MyApiProject.props",
+      "Id": "obj\\Release\\net8.0\\staticwebassets\\msbuild.buildTransitive.MyApiProject.props",
       "PackagePath": "buildTransitive\\MyApiProject.props"
     }
   ],
