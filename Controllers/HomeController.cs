@@ -1,13 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using MyApiProject.Data;  // Adjust this using directive based on where your DbContext is located.
-using MyApiProject.Models; // This includes your User model
+using Microsoft.Extensions.Logging.Debug;
+using MyApiProject.Data;
+using MyApiProject.Models;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MyApiProject.Controllers
 {
     [ApiController]
-    [Route("/")]
+    [Route("api")]
     public class HomeController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -17,11 +19,34 @@ namespace MyApiProject.Controllers
             _context = context;
         }
 
-        [HttpGet]
-        public IActionResult Get()
+        [HttpGet("")]
+        public IActionResult GetRoot()
         {
-            // Fetch all usernames from the database
-            var usernames = _context.usuarios.Select(u => u.username).ToList();
+            return Ok("API is running.");
+        }
+
+
+        [HttpGet("login")]
+        public async Task<IActionResult> Login(string username, string password)
+        {
+            // Check if a user with the given username and password exists
+            var userExists = await _context.usuarios
+                .AnyAsync(u => u.username == username && u.password == password);
+
+            if (userExists)
+            {
+                return Ok(new { Message = "Login successful" });
+            }
+            else
+            {
+                return Unauthorized(new { Message = "Invalid username or password" });
+            }
+        }
+
+        [HttpGet("users")]
+        public async Task<IActionResult> GetUsers()
+        {
+            var usernames = await _context.usuarios.Select(u => u.username).ToListAsync();
             return Ok(usernames);
         }
     }

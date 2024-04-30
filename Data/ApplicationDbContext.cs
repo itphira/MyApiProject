@@ -10,6 +10,6 @@ namespace MyApiProject.Data
         {
         }
 
-        public DbSet<User> usuarios { get; set; } // This will be your entity set for Users
+         public DbSet<User> usuarios { get; set; } // This will be your entity set for Users
     }
 }
