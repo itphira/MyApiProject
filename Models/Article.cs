@@ -1,15 +1,16 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 public class Article
 {
+    [Column("id")]
     public int Id { get; set; }
 
-    [Required]
-    [StringLength(255)]
+    [Column("title")]
     public string Title { get; set; }
 
-    [Required]
+    [Column("text")]
     public string Text { get; set; }
 
-    public byte[] Image { get; set; } // Consider limiting the size
+    [Column("image", TypeName = "bytea")]
+    public byte[] Image { get; set; }
 }

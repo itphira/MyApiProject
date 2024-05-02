@@ -28,15 +28,16 @@ namespace MyApiProject.Controllers
         [HttpGet("articles")]
         public async Task<IActionResult> GetAllArticles()
         {
-            var articles = await _context.articulos
-                .Select(article => new {
-                    article.Id,
-                    article.Title,
-                    article.Text,
-                    Image = Convert.ToBase64String(article.Image)
-                })
-                .ToListAsync();
-            return Ok(articles);
+            try
+            {
+                var articles = await _context.articulos.ToListAsync();
+                return Ok(articles);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception details to help with debugging
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
         }
 
 
