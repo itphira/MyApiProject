@@ -25,6 +25,20 @@ namespace MyApiProject.Controllers
             return Ok("API is running.");
         }
 
+        [HttpGet("articles")]
+        public async Task<IActionResult> GetAllArticles()
+        {
+            var articles = await _context.articulos
+                .Select(article => new {
+                    article.Id,
+                    article.Title,
+                    article.Text,
+                    Image = Convert.ToBase64String(article.Image)
+                })
+                .ToListAsync();
+            return Ok(articles);
+        }
+
 
         [HttpGet("login")]
         public async Task<IActionResult> Login(string username, string password)
