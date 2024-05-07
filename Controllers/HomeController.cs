@@ -64,5 +64,27 @@ namespace MyApiProject.Controllers
             var usernames = await _context.usuarios.Select(u => u.username).ToListAsync();
             return Ok(usernames);
         }
+
+        [HttpGet("articles/{articleId}/comments")]
+        public async Task<IActionResult> GetArticleComments(int articleId)
+        {
+            try
+            {
+                var comments = await _context.Comments
+                    .Where(c => c.ArticleId == articleId)
+                    .OrderByDescending(c => c.PostedDate)
+                    .ToListAsync();
+
+                if (comments == null || !comments.Any())
+                    return NotFound(new { Message = "No comments found for this article." });
+
+                return Ok(comments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
     }
 }
