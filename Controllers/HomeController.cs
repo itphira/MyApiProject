@@ -101,7 +101,7 @@ namespace MyApiProject.Controllers
                 _context.Comments.Add(comment);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetComment), new { id = comment.CommentId }, comment);
+                return CreatedAtAction("GetComment", new { id = comment.CommentId }, comment);
             }
             catch (Exception ex)
             {
