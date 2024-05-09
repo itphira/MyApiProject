@@ -13,10 +13,12 @@ namespace MyApiProject.Controllers
     public class HomeController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<HomeController> _logger;  // Add a logger
 
-        public HomeController(ApplicationDbContext context)
+        public HomeController(ApplicationDbContext context, ILogger<HomeController> logger)
         {
             _context = context;
+            _logger = logger; // Initialize the logger
         }
 
         [HttpGet("")]
@@ -87,14 +89,14 @@ namespace MyApiProject.Controllers
         }
 
         [HttpPost("articles/{articleId}/comments")]
-        public async Task<IActionResult> PostComment(int articleId, [FromBody] Comment comment, int? parentId)
+        public async Task<IActionResult> PostComment(int articleId, [FromBody] Comment comment)
         {
+            _logger.LogInformation($"Received comment with ParentId: {comment.ParentId}"); // Log the ParentId
+
             if (comment == null || comment.ArticleId != articleId)
             {
                 return BadRequest("Invalid comment data");
             }
-
-            comment.ParentId = parentId; // Ensure this is properly received and set
 
             try
             {
@@ -106,6 +108,7 @@ namespace MyApiProject.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError($"Error posting comment: {ex}");
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
