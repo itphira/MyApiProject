@@ -26,14 +26,11 @@ namespace MyApiProject.Data
             modelBuilder.Entity<Comment>().HasKey(c => c.CommentId);
             modelBuilder.Entity<Comment>().Property(c => c.CommentId).HasColumnName("comment_id");
             modelBuilder.Entity<Comment>().Property(c => c.ArticleId).HasColumnName("articulo_id");
+            modelBuilder.Entity<Comment>().Property(c => c.ParentId).HasColumnName("parent_id").IsRequired(false);
             modelBuilder.Entity<Comment>().Property(c => c.Author).HasColumnName("author");
             modelBuilder.Entity<Comment>().Property(c => c.CommentText).HasColumnName("comment");
             modelBuilder.Entity<Comment>().Property(c => c.PostedDate).HasColumnName("posted_date");
             modelBuilder.Entity<Comment>().HasOne<Article>().WithMany().HasForeignKey(c => c.ArticleId);
         }
-
-
-
     }
-
 }
