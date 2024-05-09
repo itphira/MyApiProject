@@ -87,17 +87,18 @@ namespace MyApiProject.Controllers
         }
 
         [HttpPost("articles/{articleId}/comments")]
-        public async Task<IActionResult> PostComment(int articleId, int? parentId, [FromBody] Comment comment)
+        public async Task<IActionResult> PostComment(int articleId, [FromBody] Comment comment, int? parentId)
         {
             if (comment == null || comment.ArticleId != articleId)
             {
                 return BadRequest("Invalid comment data");
             }
 
+            comment.ParentId = parentId; // Ensure this is properly received and set
+
             try
             {
-                comment.PostedDate = DateTime.UtcNow; // Set the posted date to the current UTC time
-                comment.ParentId = parentId; // Set the parent ID
+                comment.PostedDate = DateTime.UtcNow;
                 _context.Comments.Add(comment);
                 await _context.SaveChangesAsync();
 
@@ -105,11 +106,9 @@ namespace MyApiProject.Controllers
             }
             catch (Exception ex)
             {
-                // Log the exception
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
-
 
         [HttpGet("comments/{id}")]
         public async Task<IActionResult> GetComment(int id)
