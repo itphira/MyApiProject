@@ -72,8 +72,9 @@ namespace MyApiProject.Controllers
         {
             try
             {
+                // Only fetch comments that have no parent
                 var comments = await _context.Comments
-                    .Where(c => c.ArticleId == articleId)
+                    .Where(c => c.ArticleId == articleId && c.ParentId == null)
                     .OrderByDescending(c => c.PostedDate)
                     .ToListAsync();
 
@@ -87,6 +88,7 @@ namespace MyApiProject.Controllers
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
+
 
         [HttpPost("articles/{articleId}/comments")]
         public async Task<IActionResult> PostComment(int articleId, [FromBody] Comment comment)
