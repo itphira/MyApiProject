@@ -60,6 +60,28 @@ namespace MyApiProject.Controllers
             }
         }
 
+        [HttpPost("users/change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordModel model)
+        {
+            var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == model.Username);
+            if (user == null || user.password != model.CurrentPassword)
+            {
+                return Unauthorized(new { Message = "Invalid username or password" });
+            }
+
+            if (model.NewPassword != model.ConfirmPassword)
+            {
+                return BadRequest(new { Message = "New password and confirm password do not match" });
+            }
+
+            user.password = model.NewPassword;
+            _context.Entry(user).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "Password successfully changed" });
+        }
+
+
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers()
         {
