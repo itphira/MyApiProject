@@ -133,10 +133,23 @@ namespace MyApiProject.Controllers
                 return NotFound();
             }
 
-            _context.Comments.Remove(comment);
-            await _context.SaveChangesAsync();
+            DeleteCommentAndReplies(id);  // Recursive deletion function
 
-            return Ok(new { Message = "Comment deleted successfully" });
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+        private void DeleteCommentAndReplies(int commentId)
+        {
+            var comment = _context.Comments.Find(commentId);
+            if (comment == null) return;
+
+            var replies = _context.Comments.Where(c => c.ParentId == commentId).ToList();
+            foreach (var reply in replies)
+            {
+                DeleteCommentAndReplies(reply.CommentId);  // Recursive call to handle nested replies
+            }
+
+            _context.Comments.Remove(comment);
         }
 
     }
