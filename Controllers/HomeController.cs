@@ -123,5 +123,21 @@ namespace MyApiProject.Controllers
             }
             return Ok(comment);
         }
+
+        [HttpDelete("comments/{id}")]
+        public async Task<IActionResult> DeleteComment(int id)
+        {
+            var comment = await _context.Comments.FindAsync(id);
+            if (comment == null)
+            {
+                return NotFound();
+            }
+
+            _context.Comments.Remove(comment);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "Comment deleted successfully" });
+        }
+
     }
 }
