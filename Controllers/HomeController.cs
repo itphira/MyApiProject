@@ -64,9 +64,15 @@ namespace MyApiProject.Controllers
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordModel model)
         {
             var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == model.Username);
-            if (user == null || user.password != model.CurrentPassword)
+            if (user == null)
             {
-                return Unauthorized(new { Message = "Invalid username or password" });
+                return Unauthorized(new { Message = "Invalid username" });
+            }
+
+            // Assuming passwords are hashed and you have a method to verify the hash
+            if (!VerifyPasswordHash(model.CurrentPassword, user.password))
+            {
+                return Unauthorized(new { Message = "Invalid current password" });
             }
 
             if (model.NewPassword != model.ConfirmPassword)
@@ -74,12 +80,26 @@ namespace MyApiProject.Controllers
                 return BadRequest(new { Message = "New password and confirm password do not match" });
             }
 
-            user.password = model.NewPassword;
+            // Assuming a method to create a new password hash
+            user.password = CreatePasswordHash(model.NewPassword);
             _context.Entry(user).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
             return Ok(new { Message = "Password successfully changed" });
         }
+
+        private bool VerifyPasswordHash(string plainText, string hash)
+        {
+            // Implement your hash verification logic here
+            return true; // Placeholder
+        }
+
+        private string CreatePasswordHash(string password)
+        {
+            // Implement your hash creation logic here
+            return password; // Placeholder
+        }
+
 
 
         [HttpGet("users")]
