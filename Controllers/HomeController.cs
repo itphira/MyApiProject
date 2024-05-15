@@ -61,46 +61,30 @@ namespace MyApiProject.Controllers
         }
 
         [HttpPost("users/change-password")]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordModel model)
+        public async Task<IActionResult> ChangePassword([FromForm] string username, [FromForm] string currentPassword, [FromForm] string newPassword, [FromForm] string confirmPassword)
         {
-            var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == model.Username);
+            var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == username);
             if (user == null)
             {
                 return Unauthorized(new { Message = "Invalid username" });
             }
 
-            // Assuming passwords are hashed and you have a method to verify the hash
-            if (!VerifyPasswordHash(model.CurrentPassword, user.password))
+            if (user.password != currentPassword) // Adjust this line based on your password hashing/salting mechanism
             {
                 return Unauthorized(new { Message = "Invalid current password" });
             }
 
-            if (model.NewPassword != model.ConfirmPassword)
+            if (newPassword != confirmPassword)
             {
                 return BadRequest(new { Message = "New password and confirm password do not match" });
             }
 
-            // Assuming a method to create a new password hash
-            user.password = CreatePasswordHash(model.NewPassword);
+            user.password = newPassword; // Ensure you hash the password if it's production code
             _context.Entry(user).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
             return Ok(new { Message = "Password successfully changed" });
         }
-
-        private bool VerifyPasswordHash(string plainText, string hash)
-        {
-            // Implement your hash verification logic here
-            return true; // Placeholder
-        }
-
-        private string CreatePasswordHash(string password)
-        {
-            // Implement your hash creation logic here
-            return password; // Placeholder
-        }
-
-
 
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers()
