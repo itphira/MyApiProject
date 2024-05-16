@@ -32,7 +32,7 @@ namespace MyApiProject.Controllers
         [HttpGet("companies")]
         public async Task<IActionResult> GetCompanies()
         {
-            var companies = await _context.Companies.ToListAsync();
+            var companies = await _context.companies.ToListAsync();
             return Ok(companies);
         }
 
@@ -46,23 +46,18 @@ namespace MyApiProject.Controllers
             return Ok(articles);
         }
 
-        // Add a company
-        [HttpPost("companies")]
-        public async Task<IActionResult> AddCompany([FromBody] Company company)
-        {
-            _context.Companies.Add(company);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetCompany), new { id = company.Id }, company);
-        }
-
         // Get a specific company
         [HttpGet("companies/{id}")]
         public async Task<IActionResult> GetCompany(int id)
         {
-            var company = await _context.Companies.FindAsync(id);
-            if (company == null) return NotFound();
+            var company = await _context.companies.FindAsync(id);
+            if (company == null)
+            {
+                return NotFound();
+            }
             return Ok(company);
         }
+
 
 
         [HttpGet("articles")]
