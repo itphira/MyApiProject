@@ -13,6 +13,8 @@ namespace MyApiProject.Data
          public DbSet<User> usuarios { get; set; }
          public DbSet<Article> articulos { get; set; }
          public DbSet<Comment> Comments { get; set; }
+         public DbSet<Company> Companies { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Article>().ToTable("articulos");

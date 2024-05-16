@@ -5,6 +5,7 @@ using MyApiProject.Data;
 using MyApiProject.Models;
 using System.Linq;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace MyApiProject.Controllers
 {
@@ -26,6 +27,43 @@ namespace MyApiProject.Controllers
         {
             return Ok("API is running.");
         }
+
+        // Get all companies
+        [HttpGet("companies")]
+        public async Task<IActionResult> GetCompanies()
+        {
+            var companies = await _context.Companies.ToListAsync();
+            return Ok(companies);
+        }
+
+        // Get articles by company
+        [HttpGet("companies/{companyId}/articles")]
+        public async Task<IActionResult> GetArticlesByCompany(int companyId)
+        {
+            var articles = await _context.articulos
+                .Where(a => a.ParentId == companyId)
+                .ToListAsync();
+            return Ok(articles);
+        }
+
+        // Add a company
+        [HttpPost("companies")]
+        public async Task<IActionResult> AddCompany([FromBody] Company company)
+        {
+            _context.Companies.Add(company);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction(nameof(GetCompany), new { id = company.Id }, company);
+        }
+
+        // Get a specific company
+        [HttpGet("companies/{id}")]
+        public async Task<IActionResult> GetCompany(int id)
+        {
+            var company = await _context.Companies.FindAsync(id);
+            if (company == null) return NotFound();
+            return Ok(company);
+        }
+
 
         [HttpGet("articles")]
         public async Task<IActionResult> GetAllArticles()

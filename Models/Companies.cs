@@ -1,19 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 
-public class Article
+public class Company
 {
     [Column("id")]
     public int Id { get; set; }
 
     [Column("title")]
-    public string Title { get; set; }
-
-    [Column("text")]
-    public string Text { get; set; }
+    public String Title { get; set; }
 
     [Column("image", TypeName = "bytea")]
     public byte[] Image { get; set; }
-
-    [Column("parent_id")]
-    public int ParentId { get; set; }
 }
+
