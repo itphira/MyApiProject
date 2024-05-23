@@ -58,8 +58,6 @@ namespace MyApiProject.Controllers
             return Ok(company);
         }
 
-
-
         [HttpGet("articles")]
         public async Task<IActionResult> GetAllArticles()
         {
