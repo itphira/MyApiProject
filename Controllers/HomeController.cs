@@ -61,7 +61,9 @@ namespace MyApiProject.Controllers
         [HttpGet("notification")]
         public async Task<IActionResult> GetNotification()
         {
-            return Ok("EUREKA!");
+            var notificationService = new NotificationService(_configuration);
+            await NotificationService.SendNotificationAsync("Prueba!", "Una notificacion de pta prueba");
+            return Ok(notificationService);
         }
         
         // Get all companies
