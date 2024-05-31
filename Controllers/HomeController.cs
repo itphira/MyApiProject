@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Debug;
 using MyApiProject.Data;
 using MyApiProject.Models;
@@ -15,11 +16,13 @@ namespace MyApiProject.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<HomeController> _logger;  // Add a logger
+        private readonly NotificationService _notificationService;
 
-        public HomeController(ApplicationDbContext context, ILogger<HomeController> logger)
+        public HomeController(ApplicationDbContext context, ILogger<HomeController> logger, NotificationService notificationService)
         {
             _context = context;
             _logger = logger; // Initialize the logger
+            _notificationService = notificationService;
         }
 
         [HttpGet("")]
@@ -27,6 +30,24 @@ namespace MyApiProject.Controllers
         {
             return Ok("API is running.");
         }
+
+        [HttpPost("add-article")]
+        public async Task<IActionResult> AddArticle([FromBody] Article article)
+        {
+            if (article == null)
+            {
+                return BadRequest("Invalid article data.");
+            }
+
+            _context.articulos.Add(article);
+            await _context.SaveChangesAsync();
+
+            // Send notification to all users
+            await _notificationService.SendNotificationToTopicAsync("all", "Nuevo Artículo", $"Se ha añadido un nuevo artículo: {article.Title}");
+
+            return Ok(new { Message = "Article added successfully." });
+        }
+
 
         // Get all companies
         [HttpGet("companies")]
