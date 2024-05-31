@@ -1,8 +1,6 @@
-using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
+using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
-using Microsoft.Extensions.Configuration;
-using System.Threading.Tasks;
 
 public class NotificationService
 {
@@ -36,3 +34,4 @@ public class NotificationService
         Console.WriteLine("Successfully sent message: " + response);
     }
 }
+

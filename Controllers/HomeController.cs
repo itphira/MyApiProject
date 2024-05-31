@@ -57,6 +57,13 @@ namespace MyApiProject.Controllers
             }
         }
 
+        // Test notification
+        [HttpGet("notification")]
+        public async Task<IActionResult> GetNotification()
+        {
+            return Ok("EUREKA!");
+        }
+        
         // Get all companies
         [HttpGet("companies")]
         public async Task<IActionResult> GetCompanies()
