@@ -1,29 +1,30 @@
+using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
+using Google.Apis.Auth.OAuth2;
+using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 
 public class NotificationService
 {
-    public async Task SendNotificationAsync(string token, string title, string body)
-    {
-        var message = new Message()
-        {
-            Token = token,
-            Notification = new Notification()
-            {
-                Title = title,
-                Body = body
-            }
-        };
+    private static bool initialized = false;
 
-        string response = await FirebaseMessaging.DefaultInstance.SendAsync(message);
-        // Log the response if necessary
+    public NotificationService(IConfiguration configuration)
+    {
+        if (!initialized)
+        {
+            FirebaseApp.Create(new AppOptions()
+            {
+                Credential = GoogleCredential.FromFile(configuration["Firebase:CredentialPath"])
+            });
+            initialized = true;
+        }
     }
 
-    public async Task SendNotificationToTopicAsync(string topic, string title, string body)
+    public static async Task SendNotificationAsync(string title, string body)
     {
         var message = new Message()
         {
-            Topic = topic,
+            Topic = "all",
             Notification = new Notification()
             {
                 Title = title,
@@ -32,6 +33,6 @@ public class NotificationService
         };
 
         string response = await FirebaseMessaging.DefaultInstance.SendAsync(message);
-        // Log the response if necessary
+        Console.WriteLine("Successfully sent message: " + response);
     }
 }

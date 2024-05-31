@@ -16,13 +16,13 @@ namespace MyApiProject.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<HomeController> _logger;  // Add a logger
-        private readonly NotificationService _notificationService;
+        private readonly IConfiguration _configuration;
 
-        public HomeController(ApplicationDbContext context, ILogger<HomeController> logger, NotificationService notificationService)
+        public HomeController(ApplicationDbContext context, ILogger<HomeController> logger, IConfiguration configuration)
         {
             _context = context;
             _logger = logger; // Initialize the logger
-            _notificationService = notificationService;
+            _configuration = configuration;
         }
 
         [HttpGet("")]
@@ -31,23 +31,31 @@ namespace MyApiProject.Controllers
             return Ok("API is running.");
         }
 
-        [HttpPost("add-article")]
-        public async Task<IActionResult> AddArticle([FromBody] Article article)
+        [HttpPost("articles")]
+        public async Task<IActionResult> CreateArticle([FromBody] Article article)
         {
             if (article == null)
             {
-                return BadRequest("Invalid article data.");
+                return BadRequest("Invalid article data");
             }
 
-            _context.articulos.Add(article);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.articulos.Add(article);
+                await _context.SaveChangesAsync();
 
-            // Send notification to all users
-            await _notificationService.SendNotificationToTopicAsync("all", "Nuevo Artículo", $"Se ha añadido un nuevo artículo: {article.Title}");
+                // Send notification
+                var notificationService = new NotificationService(_configuration);
+                await NotificationService.SendNotificationAsync("New Article", "A new article has been added.");
 
-            return Ok(new { Message = "Article added successfully." });
+                return CreatedAtAction("GetArticle", new { id = article.Id }, article);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error creating article: {ex}");
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
         }
-
 
         // Get all companies
         [HttpGet("companies")]
