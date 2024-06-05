@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Debug;
 using MyApiProject.Data;
 using MyApiProject.Models;
 using System.Linq;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace MyApiProject.Controllers
 {
@@ -58,32 +59,12 @@ namespace MyApiProject.Controllers
 
         // Test notification
         [HttpGet("notification")]
-        public async Task<IActionResult> GetNotification()
+        [HttpPost("notification")]
+        public async Task<IActionResult> SendNotification()
         {
             var notificationService = new NotificationService(_configuration);
-            await NotificationService.SendNotificationAsync("Prueba!", "Una notificacion de pta prueba");
-            return Ok(notificationService);
-        }
-
-        [HttpPost("users/save-token")]
-        public IActionResult SaveToken([FromBody] SaveTokenModel model)
-        {
-            if (string.IsNullOrEmpty(model.Username) || string.IsNullOrEmpty(model.Token))
-            {
-                return BadRequest("Invalid token data");
-            }
-
-            // Save the token to the database
-            var user = _context.usuarios.FirstOrDefault(u => u.username == model.Username);
-            if (user != null)
-            {
-                user.FirebaseToken = model.Token;
-                _context.Entry(user).State = EntityState.Modified;
-                _context.SaveChanges();
-                return Ok();
-            }
-
-            return NotFound("User not found");
+            await notificationService.SendNotificationAsync("Test Notification", "This is a test notification from the API.");
+            return Ok(new { Message = "Notification sent successfully" });
         }
 
         // Get all companies
@@ -267,10 +248,5 @@ namespace MyApiProject.Controllers
             _context.Comments.Remove(comment);
         }
 
-    }
-    public class SaveTokenModel
-    {
-        public string Username { get; set; }
-        public string Token { get; set; }
     }
 }

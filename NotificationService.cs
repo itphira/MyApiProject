@@ -1,38 +1,45 @@
-using FirebaseAdmin;
-using FirebaseAdmin.Messaging;
-using Google.Apis.Auth.OAuth2;
-using Microsoft.Extensions.Configuration;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 
-public class NotificationService
+namespace MyApiProject
 {
-    private static bool initialized = false;
-
-    public NotificationService(IConfiguration configuration)
+    public class NotificationService
     {
-        if (!initialized)
+        private readonly IConfiguration _configuration;
+
+        public NotificationService(IConfiguration configuration)
         {
-            FirebaseApp.Create(new AppOptions()
-            {
-                Credential = GoogleCredential.FromFile(configuration["Firebase:CredentialPath"])
-            });
-            initialized = true;
+            _configuration = configuration;
         }
-    }
 
-    public static async Task SendNotificationAsync(string title, string body)
-    {
-        var message = new Message()
+        public async Task SendNotificationAsync(string title, string message)
         {
-            Topic = "all",
-            Notification = new Notification()
-            {
-                Title = title,
-                Body = body
-            }
-        };
+            var firebaseServerKey = _configuration["Firebase:ServerKey"];
+            var firebaseSenderId = _configuration["Firebase:SenderId"];
+            var url = "https://fcm.googleapis.com/fcm/send";
 
-        string response = await FirebaseMessaging.DefaultInstance.SendAsync(message);
-        Console.WriteLine("Notification sent: " + response);
+            var data = new
+            {
+                to = "/topics/all",
+                notification = new
+                {
+                    title,
+                    body = message
+                }
+            };
+
+            var json = JsonConvert.SerializeObject(data);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"key={firebaseServerKey}");
+            client.DefaultRequestHeaders.TryAddWithoutValidation("Sender", $"id={firebaseSenderId}");
+
+            var response = await client.PostAsync(url, content);
+            response.EnsureSuccessStatusCode();
+        }
     }
 }
