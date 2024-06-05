@@ -1,6 +1,8 @@
-using FirebaseAdmin.Messaging;
 using FirebaseAdmin;
+using FirebaseAdmin.Messaging;
 using Google.Apis.Auth.OAuth2;
+using Microsoft.Extensions.Configuration;
+using System.Threading.Tasks;
 
 public class NotificationService
 {
@@ -31,7 +33,6 @@ public class NotificationService
         };
 
         string response = await FirebaseMessaging.DefaultInstance.SendAsync(message);
-        Console.WriteLine("Successfully sent message: " + response);
+        Console.WriteLine("Notification sent: " + response);
     }
 }
-

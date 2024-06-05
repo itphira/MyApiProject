@@ -17,6 +17,7 @@ namespace MyApiProject.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
             modelBuilder.Entity<Article>().ToTable("articulos");
             modelBuilder.Entity<Article>().HasKey(a => a.Id);
             modelBuilder.Entity<Article>().Property(a => a.Id).HasColumnName("id");
