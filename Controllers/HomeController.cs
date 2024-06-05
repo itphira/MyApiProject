@@ -46,7 +46,7 @@ namespace MyApiProject.Controllers
 
                 // Send notification
                 var notificationService = new NotificationService(_configuration);
-                await NotificationService.SendNotificationAsync("New Article", "A new article has been added.");
+                await notificationService.SendNotificationAsync("New Article", "A new article has been added.");
 
                 return CreatedAtAction("GetArticle", new { id = article.Id }, article);
             }
@@ -58,7 +58,6 @@ namespace MyApiProject.Controllers
         }
 
         // Test notification
-        [HttpGet("notification")]
         [HttpPost("notification")]
         public async Task<IActionResult> SendNotification()
         {
