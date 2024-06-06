@@ -58,7 +58,7 @@ namespace MyApiProject.Controllers
         }
 
         // Test notification
-        [HttpGet("notification")]
+        [HttpPost("notification")]
         public async Task<IActionResult> Prueba()
         {
             var notificationService = new NotificationService(_configuration);
