@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace MyApiProject
@@ -9,10 +10,12 @@ namespace MyApiProject
     public class NotificationService
     {
         private readonly IConfiguration _configuration;
+        private readonly ILogger<NotificationService> _logger;
 
-        public NotificationService(IConfiguration configuration)
+        public NotificationService(IConfiguration configuration, ILogger<NotificationService> logger)
         {
             _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task SendNotificationAsync(string title, string message)
@@ -38,12 +41,23 @@ namespace MyApiProject
             client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"key={firebaseServerKey}");
             client.DefaultRequestHeaders.TryAddWithoutValidation("Sender", $"id={firebaseSenderId}");
 
-            var response = await client.PostAsync(url, content);
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                throw new HttpRequestException($"Failed to send notification: {response.StatusCode}, Response: {responseString}");
+                var response = await client.PostAsync(url, content);
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError($"Failed to send notification: {response.StatusCode}, Response: {responseString}");
+                    throw new HttpRequestException($"Failed to send notification: {response.StatusCode}, Response: {responseString}");
+                }
+
+                _logger.LogInformation($"Notification sent successfully: {responseString}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Exception in SendNotificationAsync: {ex.Message}");
+                throw;
             }
         }
     }
