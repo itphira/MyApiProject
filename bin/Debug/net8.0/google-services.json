@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1038552327464",
+    "project_id": "phirapp",
+    "storage_bucket": "phirapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1038552327464:android:5e4a91425072ff71a69c1d",
+        "android_client_info": {
+          "package_name": "com.example.yourapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAuFyNPHSoab6ibC_fqQegdOHgqdfnDHJ4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

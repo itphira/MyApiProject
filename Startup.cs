@@ -1,3 +1,5 @@
+using MyApiProject;
+
 public class Startup
 {
     public IConfiguration Configuration { get; }

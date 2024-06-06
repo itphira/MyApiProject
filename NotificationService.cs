@@ -17,8 +17,8 @@ namespace MyApiProject
 
         public async Task SendNotificationAsync(string title, string message)
         {
-            var firebaseServerKey = _configuration["BOqNY7jh1qW9omogHIMVvAZRkS0KEMO_zZHtNAnF-jyBS7WtbzTaPIl8t40HJWN_OsbGSXlasxUZ62rQV3Hd9eI"];
-            var firebaseSenderId = _configuration["1038552327464"];
+            var firebaseServerKey = _configuration["Firebase:ServerKey"];
+            var firebaseSenderId = _configuration["Firebase:SenderId"];
             var url = "https://fcm.googleapis.com/fcm/send";
 
             var data = new
@@ -39,7 +39,12 @@ namespace MyApiProject
             client.DefaultRequestHeaders.TryAddWithoutValidation("Sender", $"id={firebaseSenderId}");
 
             var response = await client.PostAsync(url, content);
-            response.EnsureSuccessStatusCode();
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException($"Failed to send notification: {response.StatusCode}, Response: {responseString}");
+            }
         }
     }
 }
