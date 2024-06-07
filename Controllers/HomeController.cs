@@ -7,6 +7,7 @@ using MyApiProject.Models;
 using System.Linq;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using Microsoft.Extensions.Logging;
 
 namespace MyApiProject.Controllers
 {
@@ -17,12 +18,14 @@ namespace MyApiProject.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<HomeController> _logger;  // Add a logger
         private readonly IConfiguration _configuration;
+        private readonly ILoggerFactory _loggerFactory;
 
-        public HomeController(ApplicationDbContext context, ILogger<HomeController> logger, IConfiguration configuration)
+        public HomeController(ApplicationDbContext context, IConfiguration configuration, ILogger<HomeController> logger, ILoggerFactory loggerFactory)
         {
             _context = context;
             _logger = logger; // Initialize the logger
             _configuration = configuration;
+            _loggerFactory = loggerFactory;
         }
 
         [HttpGet("")]
@@ -31,37 +34,12 @@ namespace MyApiProject.Controllers
             return Ok("API is running.");
         }
 
-        [HttpPost("articles")]
-        public async Task<IActionResult> CreateArticle([FromBody] Article article)
-        {
-            if (article == null)
-            {
-                return BadRequest("Invalid article data");
-            }
-
-            try
-            {
-                _context.articulos.Add(article);
-                await _context.SaveChangesAsync();
-
-                // Send notification
-                var notificationService = new NotificationService(_configuration);
-                await notificationService.SendNotificationAsync("New Article", "A new article has been added.");
-
-                return CreatedAtAction("GetArticle", new { id = article.Id }, article);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error creating article: {ex}");
-                return StatusCode(500, "Internal server error: " + ex.Message);
-            }
-        }
-
         // Test notification
         [HttpPost("notification")]
         public async Task<IActionResult> Prueba()
         {
-            var notificationService = new NotificationService(_configuration);
+            var notificationLogger = _loggerFactory.CreateLogger<NotificationService>();
+            var notificationService = new NotificationService(_configuration, notificationLogger);
             await notificationService.SendNotificationAsync("Test Notification", "This is a test notification from the API.");
             return Ok(new { Message = "Notification sent successfully" });
         }
