@@ -12,7 +12,18 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddControllers();
-        services.AddSingleton<NotificationService>();
+
+        // Add CORS policy
+        services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAllOrigins",
+                builder => builder
+                    .AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader());
+        });
+
+        // Other service configurations...
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -23,7 +34,12 @@ public class Startup
         }
 
         app.UseHttpsRedirection();
+
         app.UseRouting();
+
+        // Use the CORS policy
+        app.UseCors("AllowAllOrigins");
+
         app.UseAuthorization();
 
         app.UseEndpoints(endpoints =>
@@ -31,4 +47,5 @@ public class Startup
             endpoints.MapControllers();
         });
     }
+
 }
