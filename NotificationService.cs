@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace MyApiProject.Services
+namespace MyApiProject
 {
     public class NotificationService
     {
@@ -43,7 +43,6 @@ namespace MyApiProject.Services
 
             try
             {
-                _logger.LogInformation("Sending notification to FCM...");
                 var response = await client.PostAsync(url, content);
                 var responseString = await response.Content.ReadAsStringAsync();
 
