@@ -29,7 +29,6 @@ namespace MyApiProject.Controllers
             _configuration = configuration;
             _loggerFactory = loggerFactory;
             _notificationService = notificationService;
-            _notificationService = notificationService;
         }
 
         [HttpGet("")]
