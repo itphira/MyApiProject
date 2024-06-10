@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace MyApiProject
+namespace MyApiProject.Services
 {
     public class NotificationService
     {

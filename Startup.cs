@@ -1,4 +1,5 @@
 using MyApiProject;
+using MyApiProject.Services;
 
 public class Startup
 {
@@ -12,6 +13,7 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddControllers();
+        services.AddSingleton<NotificationService>();
 
         // Add CORS policy
         services.AddCors(options =>

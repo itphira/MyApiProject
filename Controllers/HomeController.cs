@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using Microsoft.Extensions.Logging;
+using MyApiProject.Services;
 
 namespace MyApiProject.Controllers
 {
@@ -19,13 +20,16 @@ namespace MyApiProject.Controllers
         private readonly ILogger<HomeController> _logger;  // Add a logger
         private readonly IConfiguration _configuration;
         private readonly ILoggerFactory _loggerFactory;
+        private readonly NotificationService _notificationService;
 
-        public HomeController(ApplicationDbContext context, IConfiguration configuration, ILogger<HomeController> logger, ILoggerFactory loggerFactory)
+        public HomeController(ApplicationDbContext context, IConfiguration configuration, ILogger<HomeController> logger, ILoggerFactory loggerFactory, NotificationService notificationService)
         {
             _context = context;
             _logger = logger; // Initialize the logger
             _configuration = configuration;
             _loggerFactory = loggerFactory;
+            _notificationService = notificationService;
+            _notificationService = notificationService;
         }
 
         [HttpGet("")]
@@ -35,12 +39,10 @@ namespace MyApiProject.Controllers
         }
 
         // Test notification
-        [HttpPost("notification")]
-        public async Task<IActionResult> Prueba()
+        [HttpPost("send-notification")]
+        public async Task<IActionResult> SendNotification()
         {
-            var notificationLogger = _loggerFactory.CreateLogger<NotificationService>();
-            var notificationService = new NotificationService(_configuration, notificationLogger);
-            await notificationService.SendNotificationAsync("Test Notification", "This is a test notification from the API.");
+            await _notificationService.SendNotificationAsync("Test Notification", "This is a test notification from the API.");
             return Ok(new { Message = "Notification sent successfully" });
         }
 
