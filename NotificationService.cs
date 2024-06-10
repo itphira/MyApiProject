@@ -43,6 +43,7 @@ namespace MyApiProject.Services
 
             try
             {
+                _logger.LogInformation("Sending notification to FCM...");
                 var response = await client.PostAsync(url, content);
                 var responseString = await response.Content.ReadAsStringAsync();
 

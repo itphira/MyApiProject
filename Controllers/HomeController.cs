@@ -41,8 +41,17 @@ namespace MyApiProject.Controllers
         [HttpPost("send-notification")]
         public async Task<IActionResult> SendNotification()
         {
-            await _notificationService.SendNotificationAsync("Test Notification", "This is a test notification from the API.");
-            return Ok(new { Message = "Notification sent successfully" });
+            try
+            {
+                await _notificationService.SendNotificationAsync("Test Notification", "This is a test notification from the API.");
+                return Ok(new { Message = "Notification sent successfully" });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception details
+                Console.WriteLine($"Error in SendNotification: {ex.Message}");
+                return StatusCode(500, new { Message = "Internal server error" });
+            }
         }
 
         // Get all companies
