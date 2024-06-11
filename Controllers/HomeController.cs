@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using Microsoft.Extensions.Logging;
 using MyApiProject.Services;
+using System.Text;
 
 namespace MyApiProject.Controllers
 {
@@ -41,7 +42,7 @@ namespace MyApiProject.Controllers
         [HttpPost("send-notification")]
         public async Task<IActionResult> SendNotification()
         {
-            var logMessages = new System.Text.StringBuilder();
+            var logMessages = new StringBuilder();
             try
             {
                 logMessages.AppendLine("Starting to send notification...");

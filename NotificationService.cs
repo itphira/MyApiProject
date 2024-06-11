@@ -43,21 +43,21 @@ namespace MyApiProject.Services
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             GoogleCredential credential;
-            using (var stream = new FileStream(serviceAccountKeyPath, FileMode.Open, FileAccess.Read))
-            {
-                logMessages.AppendLine("Loading Google credentials...");
-                credential = GoogleCredential.FromStream(stream)
-                    .CreateScoped("https://www.googleapis.com/auth/firebase.messaging");
-            }
-
-            var token = await credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
-            logMessages.AppendLine("Retrieved access token.");
-
-            using var client = new HttpClient();
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"Bearer {token}");
-
             try
             {
+                using (var stream = new FileStream(serviceAccountKeyPath, FileMode.Open, FileAccess.Read))
+                {
+                    logMessages.AppendLine("Loading Google credentials...");
+                    credential = GoogleCredential.FromStream(stream)
+                        .CreateScoped("https://www.googleapis.com/auth/firebase.messaging");
+                }
+
+                var token = await credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
+                logMessages.AppendLine("Retrieved access token.");
+
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"Bearer {token}");
+
                 logMessages.AppendLine("Sending notification to FCM...");
                 var response = await client.PostAsync(url, content);
                 var responseString = await response.Content.ReadAsStringAsync();
@@ -73,6 +73,7 @@ namespace MyApiProject.Services
             catch (Exception ex)
             {
                 logMessages.AppendLine($"Exception in SendNotificationAsync: {ex.Message}");
+                _logger.LogError($"Exception in SendNotificationAsync: {ex.Message}");
                 throw;
             }
         }
