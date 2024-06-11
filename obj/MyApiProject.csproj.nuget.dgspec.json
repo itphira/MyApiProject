@@ -54,6 +54,10 @@
               "target": "Package",
               "version": "[3.0.0, )"
             },
+            "Karambolo.Extensions.Logging.File": {
+              "target": "Package",
+              "version": "[3.5.0, )"
+            },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
               "version": "[8.0.4, )"
