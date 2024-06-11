@@ -1,11 +1,16 @@
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Services;
+using Google.Apis.Util;
+using Google.Apis.Util.Store;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.IO;
 
-namespace MyApiProject
+namespace MyApiProject.Services
 {
     public class NotificationService
     {
@@ -20,29 +25,41 @@ namespace MyApiProject
 
         public async Task SendNotificationAsync(string title, string message)
         {
-            var firebaseServerKey = _configuration["Firebase:ServerKey"];
-            var firebaseSenderId = _configuration["Firebase:SenderId"];
-            var url = "https://fcm.googleapis.com/fcm/send";
+            var projectId = _configuration["Firebase:ProjectId"];
+            var serviceAccountKeyPath = _configuration["Firebase:ServiceAccountKeyPath"];
+            var url = $"https://fcm.googleapis.com/v1/projects/{projectId}/messages:send";
 
             var data = new
             {
-                to = "/topics/all",
-                notification = new
+                message = new
                 {
-                    title,
-                    body = message
+                    topic = "all",
+                    notification = new
+                    {
+                        title,
+                        body = message
+                    }
                 }
             };
 
             var json = JsonConvert.SerializeObject(data);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
+            GoogleCredential credential;
+            using (var stream = new FileStream(serviceAccountKeyPath, FileMode.Open, FileAccess.Read))
+            {
+                credential = GoogleCredential.FromStream(stream)
+                    .CreateScoped("https://www.googleapis.com/auth/firebase.messaging");
+            }
+
+            var token = await credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
+
             using var client = new HttpClient();
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"key={firebaseServerKey}");
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Sender", $"id={firebaseSenderId}");
+            client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"Bearer {token}");
 
             try
             {
+                _logger.LogInformation("Sending notification to FCM...");
                 var response = await client.PostAsync(url, content);
                 var responseString = await response.Content.ReadAsStringAsync();
 
