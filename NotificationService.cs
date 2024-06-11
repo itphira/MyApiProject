@@ -2,9 +2,6 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Google.Apis.Auth.OAuth2;
-using Google.Apis.Services;
-using Google.Apis.Util;
-using Google.Apis.Util.Store;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -46,10 +43,18 @@ namespace MyApiProject.Services
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             GoogleCredential credential;
-            using (var stream = new FileStream(serviceAccountKeyPath, FileMode.Open, FileAccess.Read))
+            try
             {
-                credential = GoogleCredential.FromStream(stream)
-                    .CreateScoped("https://www.googleapis.com/auth/firebase.messaging");
+                using (var stream = new FileStream(serviceAccountKeyPath, FileMode.Open, FileAccess.Read))
+                {
+                    credential = GoogleCredential.FromStream(stream)
+                        .CreateScoped("https://www.googleapis.com/auth/firebase.messaging");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error loading GoogleCredential: {ex.Message}");
+                throw;
             }
 
             var token = await credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
