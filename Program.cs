@@ -1,14 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using MyApiProject.Data;
+using MyApiProject.Services;
 using Microsoft.Extensions.Logging;
-using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
-
-// Add DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -22,6 +20,9 @@ builder.Services.AddLogging(logging =>
 
 // Add Application Insights
 builder.Services.AddApplicationInsightsTelemetry(builder.Configuration["ApplicationInsights:InstrumentationKey"]);
+
+// Register the NotificationService
+builder.Services.AddScoped<NotificationService>();
 
 var app = builder.Build();
 
