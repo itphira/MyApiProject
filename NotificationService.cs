@@ -20,7 +20,7 @@ namespace MyApiProject.Services
             _logger = logger;
         }
 
-        public async Task SendNotificationAsync(string title, string message, StringBuilder logMessages)
+        public async Task SendNotificationAsync(string title, string message)
         {
             var projectId = _configuration["Firebase:ProjectId"];
             var serviceAccountKeyPath = _configuration["Firebase:ServiceAccountKeyPath"];
@@ -45,34 +45,32 @@ namespace MyApiProject.Services
             GoogleCredential credential;
             try
             {
+                _logger.LogInformation("Loading Google credentials...");
                 using (var stream = new FileStream(serviceAccountKeyPath, FileMode.Open, FileAccess.Read))
                 {
-                    logMessages.AppendLine("Loading Google credentials...");
                     credential = GoogleCredential.FromStream(stream)
                         .CreateScoped("https://www.googleapis.com/auth/firebase.messaging");
                 }
 
                 var token = await credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
-                logMessages.AppendLine("Retrieved access token.");
 
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"Bearer {token}");
 
-                logMessages.AppendLine("Sending notification to FCM...");
+                _logger.LogInformation("Sending notification to FCM...");
                 var response = await client.PostAsync(url, content);
                 var responseString = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    logMessages.AppendLine($"Failed to send notification: {response.StatusCode}, Response: {responseString}");
+                    _logger.LogError($"Failed to send notification: {response.StatusCode}, Response: {responseString}");
                     throw new HttpRequestException($"Failed to send notification: {response.StatusCode}, Response: {responseString}");
                 }
 
-                logMessages.AppendLine($"Notification sent successfully: {responseString}");
+                _logger.LogInformation($"Notification sent successfully: {responseString}");
             }
             catch (Exception ex)
             {
-                logMessages.AppendLine($"Exception in SendNotificationAsync: {ex.Message}");
                 _logger.LogError($"Exception in SendNotificationAsync: {ex.Message}");
                 throw;
             }

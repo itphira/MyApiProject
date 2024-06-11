@@ -42,18 +42,15 @@ namespace MyApiProject.Controllers
         [HttpPost("send-notification")]
         public async Task<IActionResult> SendNotification()
         {
-            var logMessages = new StringBuilder();
             try
             {
-                logMessages.AppendLine("Starting to send notification...");
-                await _notificationService.SendNotificationAsync("Test Notification", "This is a test notification from the API.", logMessages);
-                logMessages.AppendLine("Notification sent successfully.");
-                return Ok(new { Message = "Notification sent successfully", Logs = logMessages.ToString() });
+                await _notificationService.SendNotificationAsync("Test Notification", "This is a test notification from the API.");
+                return Ok(new { Message = "Notification sent successfully" });
             }
             catch (Exception ex)
             {
-                logMessages.AppendLine($"Error in SendNotification: {ex.Message}");
-                return StatusCode(500, new { Message = "Internal server error", Logs = logMessages.ToString() });
+                _logger.LogError($"Error in SendNotification: {ex.Message}");
+                return StatusCode(500, new { Message = $"Internal server error: {ex.Message}" });
             }
         }
 

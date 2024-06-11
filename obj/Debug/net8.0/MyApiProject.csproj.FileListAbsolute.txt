@@ -114,3 +114,4 @@ C:\Users\it.soporte\source\repos\MyApiProject\MyApiProject\bin\Debug\net8.0\Goog
 C:\Users\it.soporte\source\repos\MyApiProject\MyApiProject\bin\Debug\net8.0\Newtonsoft.Json.dll
 C:\Users\it.soporte\source\repos\MyApiProject\MyApiProject\bin\Debug\net8.0\System.Management.dll
 C:\Users\it.soporte\source\repos\MyApiProject\MyApiProject\bin\Debug\net8.0\runtimes\win\lib\net7.0\System.Management.dll
+C:\Users\it.soporte\source\repos\MyApiProject\MyApiProject\bin\Debug\net8.0\Karambolo.Extensions.Logging.File.dll
