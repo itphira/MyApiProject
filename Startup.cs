@@ -1,4 +1,4 @@
-using Microsoft.ApplicationInsights.Extensibility;
+using MyApiProject;
 
 public class Startup
 {
@@ -13,8 +13,15 @@ public class Startup
     {
         services.AddControllers();
 
-        // Add Application Insights telemetry
-        services.AddApplicationInsightsTelemetry(Configuration["ApplicationInsights:InstrumentationKey"]);
+        // Add CORS policy
+        services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAllOrigins",
+                builder => builder
+                    .AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader());
+        });
 
         // Other service configurations...
     }
@@ -27,7 +34,12 @@ public class Startup
         }
 
         app.UseHttpsRedirection();
+
         app.UseRouting();
+
+        // Use the CORS policy
+        app.UseCors("AllowAllOrigins");
+
         app.UseAuthorization();
 
         app.UseEndpoints(endpoints =>
@@ -35,4 +47,5 @@ public class Startup
             endpoints.MapControllers();
         });
     }
+
 }

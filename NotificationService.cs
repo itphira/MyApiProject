@@ -1,13 +1,11 @@
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Google.Apis.Auth.OAuth2;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.IO;
 
-namespace MyApiProject.Services
+namespace MyApiProject
 {
     public class NotificationService
     {
@@ -22,42 +20,29 @@ namespace MyApiProject.Services
 
         public async Task SendNotificationAsync(string title, string message)
         {
-            var projectId = _configuration["Firebase:ProjectId"];
-            var serviceAccountKeyPath = _configuration["Firebase:ServiceAccountKeyPath"];
-            var url = $"https://fcm.googleapis.com/v1/projects/{projectId}/messages:send";
+            var firebaseServerKey = _configuration["Firebase:ServerKey"];
+            var firebaseSenderId = _configuration["Firebase:SenderId"];
+            var url = "https://fcm.googleapis.com/fcm/send";
 
             var data = new
             {
-                message = new
+                to = "/topics/all",
+                notification = new
                 {
-                    topic = "all",
-                    notification = new
-                    {
-                        title,
-                        body = message
-                    }
+                    title,
+                    body = message
                 }
             };
 
             var json = JsonConvert.SerializeObject(data);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            GoogleCredential credential;
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"key={firebaseServerKey}");
+            client.DefaultRequestHeaders.TryAddWithoutValidation("Sender", $"id={firebaseSenderId}");
+
             try
             {
-                _logger.LogInformation("Loading Google credentials...");
-                using (var stream = new FileStream(serviceAccountKeyPath, FileMode.Open, FileAccess.Read))
-                {
-                    credential = GoogleCredential.FromStream(stream)
-                        .CreateScoped("https://www.googleapis.com/auth/firebase.messaging");
-                }
-
-                var token = await credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
-
-                using var client = new HttpClient();
-                client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"Bearer {token}");
-
-                _logger.LogInformation("Sending notification to FCM...");
                 var response = await client.PostAsync(url, content);
                 var responseString = await response.Content.ReadAsStringAsync();
 
