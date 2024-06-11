@@ -20,7 +20,7 @@ namespace MyApiProject.Services
             _logger = logger;
         }
 
-        public async Task SendNotificationAsync(string title, string message)
+        public async Task SendNotificationAsync(string title, string message, StringBuilder logMessages)
         {
             var projectId = _configuration["Firebase:ProjectId"];
             var serviceAccountKeyPath = _configuration["Firebase:ServiceAccountKeyPath"];
@@ -43,42 +43,36 @@ namespace MyApiProject.Services
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             GoogleCredential credential;
-            try
+            using (var stream = new FileStream(serviceAccountKeyPath, FileMode.Open, FileAccess.Read))
             {
-                using (var stream = new FileStream(serviceAccountKeyPath, FileMode.Open, FileAccess.Read))
-                {
-                    credential = GoogleCredential.FromStream(stream)
-                        .CreateScoped("https://www.googleapis.com/auth/firebase.messaging");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error loading GoogleCredential: {ex.Message}");
-                throw;
+                logMessages.AppendLine("Loading Google credentials...");
+                credential = GoogleCredential.FromStream(stream)
+                    .CreateScoped("https://www.googleapis.com/auth/firebase.messaging");
             }
 
             var token = await credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
+            logMessages.AppendLine("Retrieved access token.");
 
             using var client = new HttpClient();
             client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"Bearer {token}");
 
             try
             {
-                _logger.LogInformation("Sending notification to FCM...");
+                logMessages.AppendLine("Sending notification to FCM...");
                 var response = await client.PostAsync(url, content);
                 var responseString = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogError($"Failed to send notification: {response.StatusCode}, Response: {responseString}");
+                    logMessages.AppendLine($"Failed to send notification: {response.StatusCode}, Response: {responseString}");
                     throw new HttpRequestException($"Failed to send notification: {response.StatusCode}, Response: {responseString}");
                 }
 
-                _logger.LogInformation($"Notification sent successfully: {responseString}");
+                logMessages.AppendLine($"Notification sent successfully: {responseString}");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Exception in SendNotificationAsync: {ex.Message}");
+                logMessages.AppendLine($"Exception in SendNotificationAsync: {ex.Message}");
                 throw;
             }
         }
