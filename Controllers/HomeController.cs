@@ -12,6 +12,16 @@ using MyApiProject.Services;
 
 namespace MyApiProject.Controllers
 {
+    [Route("")]
+    public class HomeController2 : ControllerBase
+    {
+        [HttpGet("")]
+        public IActionResult Prueba()
+        {
+            return Ok("API is running.");
+        }
+    }
+
     [ApiController]
     [Route("api")]
     public class HomeController : ControllerBase
