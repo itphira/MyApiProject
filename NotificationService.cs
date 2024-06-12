@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 using System.Net.Http;
 using System.Text;
 
-namespace MyApiProject
+namespace MyApiProject.Services
 {
     public class NotificationService
     {
