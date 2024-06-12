@@ -52,8 +52,8 @@ namespace MyApiProject.Services
                 {
                     _lastCheckedTime = newArticles.Max(a => a.CreatedDate);
                 }
+                await notificationService.SendNotificationAsync("New Article Added", $"Article was added.");
             }
-            await notificationService.SendNotificationAsync("New Article Added", $"Article was added.");
         }
     }
 }
