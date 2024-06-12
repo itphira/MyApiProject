@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using MyApiProject.Data;
-using Microsoft.Extensions.Logging;
 using MyApiProject.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +9,10 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Register NotificationService as a Singleton
+builder.Services.AddSingleton<NotificationService>();
+
+// Logging setup
 builder.Services.AddLogging(logging =>
 {
     logging.ClearProviders();
@@ -17,14 +20,12 @@ builder.Services.AddLogging(logging =>
     logging.SetMinimumLevel(LogLevel.Debug);
 });
 
-// Add Application Insights
+// Application Insights setup
 builder.Services.AddApplicationInsightsTelemetry(builder.Configuration["ApplicationInsights:InstrumentationKey"]);
-
-// Register NotificationService
-builder.Services.AddSingleton<NotificationService>();
 
 var app = builder.Build();
 
+// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
