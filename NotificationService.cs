@@ -1,11 +1,14 @@
-using Google.Apis.Auth.OAuth2;
-using System.IO;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Services;
+using Google.Apis.Util;
+using Google.Apis.Util.Store;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Net.Http;
-using System.Text;
+using System.IO;
 
 namespace MyApiProject.Services
 {
@@ -56,6 +59,7 @@ namespace MyApiProject.Services
 
             try
             {
+                _logger.LogInformation("Sending notification to FCM...");
                 var response = await client.PostAsync(url, content);
                 var responseString = await response.Content.ReadAsStringAsync();
 

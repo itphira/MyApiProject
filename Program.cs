@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using MyApiProject.Data;
 using MyApiProject.Services;
+using Microsoft.Extensions.Logging;
+using MyApiProject;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,8 +11,11 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register NotificationService as a Singleton
+// Register NotificationService as a singleton
 builder.Services.AddSingleton<NotificationService>();
+
+// Register the background service
+builder.Services.AddHostedService<ArticleMonitorService>();
 
 // Logging setup
 builder.Services.AddLogging(logging =>
