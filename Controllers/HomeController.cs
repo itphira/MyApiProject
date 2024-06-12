@@ -8,7 +8,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using Microsoft.Extensions.Logging;
-using MyApiProject.Services;
 
 namespace MyApiProject.Controllers
 {

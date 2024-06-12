@@ -1,13 +1,13 @@
-using System.Net.Http;
-using System.Text;
+using Google.Apis.Auth.OAuth2;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Google.Apis.Auth.OAuth2;
-using System.IO;
+using System.Net.Http;
+using System.Text;
 
-namespace MyApiProject.Services
+namespace MyApiProject
 {
     public class NotificationService
     {
