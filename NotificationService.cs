@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace MyApiProject
+namespace MyApiProject.Services
 {
     public class NotificationService
     {
@@ -22,15 +22,18 @@ namespace MyApiProject
         {
             var firebaseServerKey = _configuration["Firebase:ServerKey"];
             var firebaseSenderId = _configuration["Firebase:SenderId"];
-            var url = "https://fcm.googleapis.com/fcm/send";
+            var url = "https://fcm.googleapis.com/v1/projects/{projectId}/messages:send";
 
             var data = new
             {
-                to = "/topics/all",
-                notification = new
+                message = new
                 {
-                    title,
-                    body = message
+                    topic = "all",
+                    notification = new
+                    {
+                        title,
+                        body = message
+                    }
                 }
             };
 

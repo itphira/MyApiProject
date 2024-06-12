@@ -1,4 +1,6 @@
-using MyApiProject;
+using Microsoft.EntityFrameworkCore;
+using MyApiProject.Data;
+using MyApiProject.Services;
 
 public class Startup
 {
@@ -23,7 +25,23 @@ public class Startup
                     .AllowAnyHeader());
         });
 
-        // Other service configurations...
+        // Add Application Insights
+        services.AddApplicationInsightsTelemetry(Configuration["ApplicationInsights:InstrumentationKey"]);
+
+        // Register NotificationService
+        services.AddSingleton<NotificationService>();
+
+        // Add DbContext
+        services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
+
+        // Add logging
+        services.AddLogging(logging =>
+        {
+            logging.ClearProviders();
+            logging.AddConsole();
+            logging.SetMinimumLevel(LogLevel.Debug);
+        });
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -34,7 +52,6 @@ public class Startup
         }
 
         app.UseHttpsRedirection();
-
         app.UseRouting();
 
         // Use the CORS policy
@@ -47,5 +64,4 @@ public class Startup
             endpoints.MapControllers();
         });
     }
-
 }
