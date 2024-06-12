@@ -12,16 +12,6 @@ using MyApiProject.Services;
 
 namespace MyApiProject.Controllers
 {
-    [Route("")]
-    public class HomeController2 : ControllerBase
-    {
-        [HttpGet("")]
-        public IActionResult Prueba()
-        {
-            return Ok("API is running.");
-        }
-    }
-
     [ApiController]
     [Route("api")]
     public class HomeController : ControllerBase
@@ -47,13 +37,13 @@ namespace MyApiProject.Controllers
             return Ok("API is running.");
         }
 
-        // Test notification
+        // Send notification
         [HttpPost("send-notification")]
-        public async Task<IActionResult> SendNotification()
+        public async Task<IActionResult> SendNotification([FromBody] NotificationRequest request)
         {
             try
             {
-                await _notificationService.SendNotificationAsync("Test Notification", "This is a test notification from the API.");
+                await _notificationService.SendNotificationAsync(request.Title, request.Message);
                 return Ok(new { Message = "Notification sent successfully" });
             }
             catch (Exception ex)
@@ -244,5 +234,10 @@ namespace MyApiProject.Controllers
             _context.Comments.Remove(comment);
         }
 
+    }
+    public class NotificationRequest
+    {
+        public string Title { get; set; }
+        public string Message { get; set; }
     }
 }
