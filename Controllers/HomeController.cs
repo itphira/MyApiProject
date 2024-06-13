@@ -53,6 +53,14 @@ namespace MyApiProject.Controllers
             }
         }
 
+        // Get all notifications
+        [HttpGet("notifications")]
+        public async Task<IActionResult> GetNotifications()
+        {
+            var notifications = await _context.notifications.ToListAsync();
+            return Ok(notifications);
+        }
+        
         // Get all companies
         [HttpGet("companies")]
         public async Task<IActionResult> GetCompanies()

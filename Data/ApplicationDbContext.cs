@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FirebaseAdmin.Messaging;
+using Microsoft.EntityFrameworkCore;
 using MyApiProject.Models; // Adjust the namespace to match your project structure
 
 namespace MyApiProject.Data
@@ -14,6 +15,7 @@ namespace MyApiProject.Data
          public DbSet<Article> articulos { get; set; }
          public DbSet<Comment> Comments { get; set; }
          public DbSet<Company> companies { get; set; }
+         public DbSet<Notification> notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
