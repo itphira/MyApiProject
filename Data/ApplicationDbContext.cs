@@ -36,6 +36,13 @@ namespace MyApiProject.Data
             modelBuilder.Entity<Comment>().Property(c => c.CommentText).HasColumnName("comment");
             modelBuilder.Entity<Comment>().Property(c => c.PostedDate).HasColumnName("posted_date");
             modelBuilder.Entity<Comment>().HasOne<Article>().WithMany().HasForeignKey(c => c.ArticleId);
+
+            modelBuilder.Entity<Notification>().ToTable("notifications");
+            modelBuilder.Entity<Notification>().HasKey(n => n.Id);
+            modelBuilder.Entity<Notification>().Property(n => n.Id).HasColumnName("id");
+            modelBuilder.Entity<Notification>().Property(n => n.Title).HasColumnName("title");
+            modelBuilder.Entity<Notification>().Property(n => n.Text).HasColumnName("text");
+            modelBuilder.Entity<Notification>().Property(n => n.Link).HasColumnName("link");
         }
     }
 }

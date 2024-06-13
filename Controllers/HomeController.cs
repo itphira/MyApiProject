@@ -53,14 +53,47 @@ namespace MyApiProject.Controllers
             }
         }
 
-        // Get all notifications
+        // Get all notifications**********************************************
         [HttpGet("notifications")]
         public async Task<IActionResult> GetNotifications()
         {
             var notifications = await _context.notifications.ToListAsync();
             return Ok(notifications);
         }
-        
+
+        [HttpPost("notifications")]
+        public async Task<IActionResult> PostNotification([FromBody] Notification notification)
+        {
+            if (notification == null)
+            {
+                return BadRequest("Invalid notification data");
+            }
+
+            try
+            {
+                _context.notifications.Add(notification);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction(nameof(GetNotification), new { id = notification.Id }, notification);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error posting notification: {ex.Message}");
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("notifications/{id}")]
+        public async Task<IActionResult> GetNotification(int id)
+        {
+            var notification = await _context.notifications.FindAsync(id);
+            if (notification == null)
+            {
+                return NotFound();
+            }
+            return Ok(notification);
+        }
+        //*****************************************************************
+
         // Get all companies
         [HttpGet("companies")]
         public async Task<IActionResult> GetCompanies()
