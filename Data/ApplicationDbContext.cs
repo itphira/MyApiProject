@@ -42,7 +42,8 @@ namespace MyApiProject.Data
             modelBuilder.Entity<Notification>().Property(n => n.Id).HasColumnName("id");
             modelBuilder.Entity<Notification>().Property(n => n.Title).HasColumnName("title");
             modelBuilder.Entity<Notification>().Property(n => n.Text).HasColumnName("text");
-            modelBuilder.Entity<Notification>().Property(n => n.Link).HasColumnName("link");
+            modelBuilder.Entity<Notification>().Property(n => n.ArticleId).HasColumnName("article_id");
+            modelBuilder.Entity<Notification>().Property(n => n.CompanyId).HasColumnName("company_id");
         }
     }
 }
