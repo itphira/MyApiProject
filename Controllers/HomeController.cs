@@ -1,14 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging.Debug;
+using Microsoft.Extensions.Logging;
 using MyApiProject.Data;
 using MyApiProject.Models;
+using MyApiProject.Services;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
-using Microsoft.Extensions.Logging;
-using MyApiProject.Services;
 
 namespace MyApiProject.Controllers
 {
@@ -17,7 +16,7 @@ namespace MyApiProject.Controllers
     public class HomeController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly ILogger<HomeController> _logger;  // Add a logger
+        private readonly ILogger<HomeController> _logger;
         private readonly IConfiguration _configuration;
         private readonly ILoggerFactory _loggerFactory;
         private readonly NotificationService _notificationService;
@@ -25,7 +24,7 @@ namespace MyApiProject.Controllers
         public HomeController(ApplicationDbContext context, IConfiguration configuration, ILogger<HomeController> logger, ILoggerFactory loggerFactory, NotificationService notificationService)
         {
             _context = context;
-            _logger = logger; // Initialize the logger
+            _logger = logger;
             _configuration = configuration;
             _loggerFactory = loggerFactory;
             _notificationService = notificationService;
@@ -37,7 +36,6 @@ namespace MyApiProject.Controllers
             return Ok("API is running.");
         }
 
-        // Send notification
         [HttpPost("send-notification")]
         public async Task<IActionResult> SendNotification([FromBody] NotificationRequest request)
         {
@@ -53,12 +51,19 @@ namespace MyApiProject.Controllers
             }
         }
 
-        // Get all notifications**********************************************
         [HttpGet("notifications")]
         public async Task<IActionResult> GetNotifications()
         {
-            var notifications = await _context.notifications.ToListAsync();
-            return Ok(notifications);
+            try
+            {
+                var notifications = await _context.notifications.ToListAsync();
+                return Ok(notifications);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error fetching notifications: {ex.Message}");
+                return StatusCode(500, new { Message = "Internal server error" });
+            }
         }
 
         [HttpPost("notifications")]
@@ -92,46 +97,73 @@ namespace MyApiProject.Controllers
             }
             return Ok(notification);
         }
-        //*****************************************************************
 
-        // Get all companies
         [HttpGet("companies")]
         public async Task<IActionResult> GetCompanies()
         {
-            var companies = await _context.companies.ToListAsync();
-            return Ok(companies);
+            try
+            {
+                var companies = await _context.companies.ToListAsync();
+                return Ok(companies);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error fetching companies: {ex.Message}");
+                return StatusCode(500, new { Message = "Internal server error" });
+            }
         }
 
-        // Get specific article
         [HttpGet("articles/{articleId}")]
         public async Task<IActionResult> GetSpecificArticle(int articleId)
         {
-            var articles = await _context.articulos
-                .Where(a => a.Id == articleId)
-                .ToListAsync();
-            return Ok(articles);
+            try
+            {
+                var articles = await _context.articulos
+                    .Where(a => a.Id == articleId)
+                    .ToListAsync();
+                return Ok(articles);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error fetching specific article: {ex.Message}");
+                return StatusCode(500, new { Message = "Internal server error" });
+            }
         }
 
-        // Get articles by company
         [HttpGet("companies/{companyId}/articles")]
         public async Task<IActionResult> GetArticlesByCompany(int companyId)
         {
-            var articles = await _context.articulos
-                .Where(a => a.ParentId == companyId)
-                .ToListAsync();
-            return Ok(articles);
+            try
+            {
+                var articles = await _context.articulos
+                    .Where(a => a.ParentId == companyId)
+                    .ToListAsync();
+                return Ok(articles);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error fetching articles by company: {ex.Message}");
+                return StatusCode(500, new { Message = "Internal server error" });
+            }
         }
 
-        // Get a specific company
         [HttpGet("companies/{id}")]
         public async Task<IActionResult> GetCompany(int id)
         {
-            var company = await _context.companies.FindAsync(id);
-            if (company == null)
+            try
             {
-                return NotFound();
+                var company = await _context.companies.FindAsync(id);
+                if (company == null)
+                {
+                    return NotFound();
+                }
+                return Ok(company);
             }
-            return Ok(company);
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error fetching company: {ex.Message}");
+                return StatusCode(500, new { Message = "Internal server error" });
+            }
         }
 
         [HttpGet("articles")]
@@ -144,26 +176,32 @@ namespace MyApiProject.Controllers
             }
             catch (Exception ex)
             {
-                // Log the exception details to help with debugging
+                _logger.LogError($"Error fetching all articles: {ex.Message}");
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
 
-
         [HttpGet("login")]
         public async Task<IActionResult> Login(string username, string password)
         {
-            // Check if a user with the given username and password exists
-            var userExists = await _context.usuarios
-                .AnyAsync(u => u.username == username && u.password == password);
+            try
+            {
+                var userExists = await _context.usuarios
+                    .AnyAsync(u => u.username == username && u.password == password);
 
-            if (userExists)
-            {
-                return Ok(new { Message = "Login successful" });
+                if (userExists)
+                {
+                    return Ok(new { Message = "Login successful" });
+                }
+                else
+                {
+                    return Unauthorized(new { Message = "Invalid username or password" });
+                }
             }
-            else
+            catch (Exception ex)
             {
-                return Unauthorized(new { Message = "Invalid username or password" });
+                _logger.LogError($"Error during login: {ex.Message}");
+                return StatusCode(500, new { Message = "Internal server error" });
             }
         }
 
@@ -176,7 +214,7 @@ namespace MyApiProject.Controllers
                 return Unauthorized(new { Message = "Invalid username" });
             }
 
-            if (user.password != currentPassword) // Adjust this line based on your password hashing/salting mechanism
+            if (user.password != currentPassword)
             {
                 return Unauthorized(new { Message = "Invalid current password" });
             }
@@ -186,7 +224,7 @@ namespace MyApiProject.Controllers
                 return BadRequest(new { Message = "New password and confirm password do not match" });
             }
 
-            user.password = newPassword; // Ensure you hash the password if it's production code
+            user.password = newPassword;
             _context.Entry(user).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
@@ -196,8 +234,16 @@ namespace MyApiProject.Controllers
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers()
         {
-            var usernames = await _context.usuarios.Select(u => u.username).ToListAsync();
-            return Ok(usernames);
+            try
+            {
+                var usernames = await _context.usuarios.Select(u => u.username).ToListAsync();
+                return Ok(usernames);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error fetching users: {ex.Message}");
+                return StatusCode(500, new { Message = "Internal server error" });
+            }
         }
 
         [HttpGet("articles/{articleId}/comments")]
@@ -217,6 +263,7 @@ namespace MyApiProject.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError($"Error fetching article comments: {ex.Message}");
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
@@ -224,7 +271,7 @@ namespace MyApiProject.Controllers
         [HttpPost("articles/{articleId}/comments")]
         public async Task<IActionResult> PostComment(int articleId, [FromBody] Comment comment)
         {
-            _logger.LogInformation($"Received comment with ParentId: {comment.ParentId}"); // Log the ParentId
+            _logger.LogInformation($"Received comment with ParentId: {comment.ParentId}");
 
             if (comment == null || comment.ArticleId != articleId)
             {
@@ -249,28 +296,45 @@ namespace MyApiProject.Controllers
         [HttpGet("comments/{id}")]
         public async Task<IActionResult> GetComment(int id)
         {
-            var comment = await _context.Comments.FindAsync(id);
-            if (comment == null)
+            try
             {
-                return NotFound();
+                var comment = await _context.Comments.FindAsync(id);
+                if (comment == null)
+                {
+                    return NotFound();
+                }
+                return Ok(comment);
             }
-            return Ok(comment);
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error fetching comment: {ex.Message}");
+                return StatusCode(500, new { Message = "Internal server error" });
+            }
         }
 
         [HttpDelete("comments/{id}")]
         public async Task<IActionResult> DeleteComment(int id)
         {
-            var comment = await _context.Comments.FindAsync(id);
-            if (comment == null)
+            try
             {
-                return NotFound();
+                var comment = await _context.Comments.FindAsync(id);
+                if (comment == null)
+                {
+                    return NotFound();
+                }
+
+                DeleteCommentAndReplies(id);
+
+                await _context.SaveChangesAsync();
+                return Ok();
             }
-
-            DeleteCommentAndReplies(id);  // Recursive deletion function
-
-            await _context.SaveChangesAsync();
-            return Ok();
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error deleting comment: {ex.Message}");
+                return StatusCode(500, new { Message = "Internal server error" });
+            }
         }
+
         private void DeleteCommentAndReplies(int commentId)
         {
             var comment = _context.Comments.Find(commentId);
@@ -279,13 +343,13 @@ namespace MyApiProject.Controllers
             var replies = _context.Comments.Where(c => c.ParentId == commentId).ToList();
             foreach (var reply in replies)
             {
-                DeleteCommentAndReplies(reply.CommentId);  // Recursive call to handle nested replies
+                DeleteCommentAndReplies(reply.CommentId);
             }
 
             _context.Comments.Remove(comment);
         }
-
     }
+
     public class NotificationRequest
     {
         public string Title { get; set; }
