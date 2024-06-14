@@ -103,12 +103,11 @@ namespace MyApiProject.Controllers
         }
 
         // Get specific article
-        [HttpGet("companies/{companyId}/articles/{articleId}")]
-        public async Task<IActionResult> GetSpecificArticle(int companyId, int articleId)
+        [HttpGet("articles/{articleId}")]
+        public async Task<IActionResult> GetSpecificArticle(int articleId)
         {
             var articles = await _context.articulos
                 .Where(a => a.Id == articleId)
-                .Where(a => a.ParentId == companyId)
                 .ToListAsync();
             return Ok(articles);
         }
