@@ -12,8 +12,8 @@ public class Notification
     public string Text { get; set; }
 
     [Column("article_id")]
-    public string ArticleId { get; set; }
+    public int ArticleId { get; set; }
     
     [Column("company_id")]
-    public string CompanyId { get; set; }
+    public int CompanyId { get; set; }
 }
