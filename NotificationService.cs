@@ -77,8 +77,7 @@ namespace MyApiProject.Services
                 throw;
             }
         }
-
-        public async Task SendReplyNotificationAsync(string title, string message, string receiverUsername)
+        public async Task SendReplyNotificationAsync(string toUsername, string fromUsername, string message)
         {
             var projectId = _configuration["Firebase:ProjectId"];
             var serviceAccountKeyPath = _configuration["Firebase:ServiceAccountKeyPath"];
@@ -88,11 +87,11 @@ namespace MyApiProject.Services
             {
                 message = new
                 {
-                    topic = receiverUsername,
+                    topic = toUsername,
                     notification = new
                     {
-                        title,
-                        body = message
+                        title = "New Reply to Your Comment",
+                        body = $"{fromUsername} replied: {message}"
                     }
                 }
             };
@@ -132,6 +131,7 @@ namespace MyApiProject.Services
                 throw;
             }
         }
+
     }
 
 }

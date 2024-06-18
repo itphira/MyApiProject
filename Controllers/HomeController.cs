@@ -59,7 +59,7 @@ namespace MyApiProject.Controllers
         {
             try
             {
-                await _notificationService.SendReplyNotificationAsync(request.Title, request.Message, request.ReceiverUsername);
+                await _notificationService.SendReplyNotificationAsync(request.ToUsername, request.FromUsername, request.Message);
                 return Ok(new { Message = "Reply notification sent successfully" });
             }
             catch (Exception ex)
@@ -263,7 +263,8 @@ namespace MyApiProject.Controllers
                         {
                             Title = "New Reply to Your Comment",
                             Message = $"{comment.Author} replied to your comment.",
-                            ReceiverUsername = parentComment.Author
+                            ToUsername = parentComment.Author,  // Corrected property name
+                            FromUsername = comment.Author       // Added property for the sender's username
                         };
 
                         await SendReplyNotification(replyNotificationRequest);
@@ -278,6 +279,7 @@ namespace MyApiProject.Controllers
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
+
 
         [HttpGet("comments/{id}")]
         public async Task<IActionResult> GetComment(int id)
@@ -327,8 +329,10 @@ namespace MyApiProject.Controllers
 
     public class ReplyNotificationRequest
     {
-        public string Title { get; set; }
+        public string ToUsername { get; set; }
+        public string FromUsername { get; set; }
         public string Message { get; set; }
-        public string ReceiverUsername { get; set; }
+        public string Title { get; set; }  // Add the Title property
     }
+
 }
