@@ -23,7 +23,7 @@ namespace MyApiProject.Services
             _logger = logger;
         }
 
-        public async Task SendNotificationAsync(string title, string message)
+        public async Task SendNotificationToUserAsync(string title, string message, string username)
         {
             var projectId = _configuration["Firebase:ProjectId"];
             var serviceAccountKeyPath = _configuration["Firebase:ServiceAccountKeyPath"];
@@ -33,7 +33,7 @@ namespace MyApiProject.Services
             {
                 message = new
                 {
-                    topic = "all",
+                    topic = username,
                     notification = new
                     {
                         title,
@@ -77,5 +77,6 @@ namespace MyApiProject.Services
                 throw;
             }
         }
+
     }
 }

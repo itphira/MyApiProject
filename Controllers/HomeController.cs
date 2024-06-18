@@ -53,6 +53,22 @@ namespace MyApiProject.Controllers
             }
         }
 
+        // Reply notifications
+        [HttpPost("send-reply-notification")]
+        public async Task<IActionResult> SendReplyNotification([FromBody] ReplyNotificationRequest request)
+        {
+            try
+            {
+                await _notificationService.SendNotificationToUserAsync(request.Title, request.Message, request.ReceiverUsername);
+                return Ok(new { Message = "Reply notification sent successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error in SendReplyNotification: {ex.Message}");
+                return StatusCode(500, new { Message = "Internal server error" });
+            }
+        }
+
         // Get all notifications**********************************************
         [HttpGet("notifications")]
         public async Task<IActionResult> GetNotifications()
@@ -236,6 +252,23 @@ namespace MyApiProject.Controllers
                 comment.PostedDate = DateTime.UtcNow;
                 _context.Comments.Add(comment);
                 await _context.SaveChangesAsync();
+
+                // Send notification if it's a reply
+                if (comment.ParentId.HasValue)
+                {
+                    var parentComment = await _context.Comments.FindAsync(comment.ParentId.Value);
+                    if (parentComment != null)
+                    {
+                        var replyNotificationRequest = new ReplyNotificationRequest
+                        {
+                            Title = "New Reply to Your Comment",
+                            Message = $"{comment.Author} replied to your comment.",
+                            ReceiverUsername = parentComment.Author
+                        };
+
+                        await SendReplyNotification(replyNotificationRequest);
+                    }
+                }
 
                 return CreatedAtAction("GetComment", new { id = comment.CommentId }, comment);
             }
