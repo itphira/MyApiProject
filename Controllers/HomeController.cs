@@ -59,6 +59,10 @@ namespace MyApiProject.Controllers
         {
             try
             {
+                if (string.IsNullOrEmpty(request.Title))
+                {
+                    request.Title = "New Reply to Your Comment";
+                }
                 await _notificationService.SendReplyNotificationAsync(request.ToUsername, request.FromUsername, request.Message);
                 return Ok(new { Message = "Reply notification sent successfully" });
             }
