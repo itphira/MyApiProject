@@ -59,7 +59,7 @@ namespace MyApiProject.Controllers
         {
             try
             {
-                await _notificationService.SendNotificationToUserAsync(request.Title, request.Message, request.ReceiverUsername);
+                await _notificationService.SendReplyNotificationAsync(request.Title, request.Message, request.ReceiverUsername);
                 return Ok(new { Message = "Reply notification sent successfully" });
             }
             catch (Exception ex)
@@ -323,5 +323,12 @@ namespace MyApiProject.Controllers
     {
         public string Title { get; set; }
         public string Message { get; set; }
+    }
+
+    public class ReplyNotificationRequest
+    {
+        public string Title { get; set; }
+        public string Message { get; set; }
+        public string ReceiverUsername { get; set; }
     }
 }
