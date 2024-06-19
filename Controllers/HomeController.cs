@@ -112,24 +112,6 @@ namespace MyApiProject.Controllers
             return Ok(notification);
         }
 
-        // Add endpoint to delete all notifications
-        [HttpDelete("notifications/deleteAll")]
-        public async Task<IActionResult> DeleteAllNotifications()
-        {
-            try
-            {
-                var notifications = _context.notifications.ToList();
-                _context.notifications.RemoveRange(notifications);
-                await _context.SaveChangesAsync();
-                return Ok(new { Message = "All notifications deleted successfully" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error deleting all notifications: {ex.Message}");
-                return StatusCode(500, "Internal server error: " + ex.Message);
-            }
-        }
-
         // Add endpoint to mark a notification as read
         [HttpPut("notifications/markAsRead/{id}")]
         public async Task<IActionResult> MarkNotificationAsRead(int id)
@@ -154,8 +136,6 @@ namespace MyApiProject.Controllers
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
-
-        // Other existing methods ...
 
         [HttpGet("companies")]
         public async Task<IActionResult> GetCompanies()
