@@ -1,14 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging.Debug;
+using Microsoft.Extensions.Logging;
 using MyApiProject.Data;
 using MyApiProject.Models;
+using MyApiProject.Services;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
-using Microsoft.Extensions.Logging;
-using MyApiProject.Services;
 
 namespace MyApiProject.Controllers
 {
@@ -17,7 +16,7 @@ namespace MyApiProject.Controllers
     public class HomeController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly ILogger<HomeController> _logger;  // Add a logger
+        private readonly ILogger<HomeController> _logger;
         private readonly IConfiguration _configuration;
         private readonly ILoggerFactory _loggerFactory;
         private readonly NotificationService _notificationService;
@@ -25,7 +24,7 @@ namespace MyApiProject.Controllers
         public HomeController(ApplicationDbContext context, IConfiguration configuration, ILogger<HomeController> logger, ILoggerFactory loggerFactory, NotificationService notificationService)
         {
             _context = context;
-            _logger = logger; // Initialize the logger
+            _logger = logger;
             _configuration = configuration;
             _loggerFactory = loggerFactory;
             _notificationService = notificationService;
@@ -73,7 +72,7 @@ namespace MyApiProject.Controllers
             }
         }
 
-        // Get all notifications**********************************************
+        // Get all notifications
         [HttpGet("notifications")]
         public async Task<IActionResult> GetNotifications()
         {
@@ -112,9 +111,52 @@ namespace MyApiProject.Controllers
             }
             return Ok(notification);
         }
-        //*****************************************************************
 
-        // Get all companies
+        // Add endpoint to delete all notifications
+        [HttpDelete("notifications/deleteAll")]
+        public async Task<IActionResult> DeleteAllNotifications()
+        {
+            try
+            {
+                var notifications = _context.notifications.ToList();
+                _context.notifications.RemoveRange(notifications);
+                await _context.SaveChangesAsync();
+                return Ok(new { Message = "All notifications deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error deleting all notifications: {ex.Message}");
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        // Add endpoint to mark a notification as read
+        [HttpPut("notifications/markAsRead/{id}")]
+        public async Task<IActionResult> MarkNotificationAsRead(int id)
+        {
+            try
+            {
+                var notification = await _context.notifications.FindAsync(id);
+                if (notification == null)
+                {
+                    return NotFound();
+                }
+
+                notification.IsRead = true;
+                _context.Entry(notification).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+
+                return Ok(new { Message = "Notification marked as read successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error marking notification as read: {ex.Message}");
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        // Other existing methods ...
+
         [HttpGet("companies")]
         public async Task<IActionResult> GetCompanies()
         {
@@ -122,7 +164,6 @@ namespace MyApiProject.Controllers
             return Ok(companies);
         }
 
-        // Get specific article
         [HttpGet("articles/{articleId}")]
         public async Task<IActionResult> GetSpecificArticle(int articleId)
         {
@@ -132,7 +173,6 @@ namespace MyApiProject.Controllers
             return Ok(articles);
         }
 
-        // Get articles by company
         [HttpGet("companies/{companyId}/articles")]
         public async Task<IActionResult> GetArticlesByCompany(int companyId)
         {
@@ -142,7 +182,6 @@ namespace MyApiProject.Controllers
             return Ok(articles);
         }
 
-        // Get a specific company
         [HttpGet("companies/{id}")]
         public async Task<IActionResult> GetCompany(int id)
         {
@@ -168,7 +207,6 @@ namespace MyApiProject.Controllers
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
-
 
         [HttpGet("login")]
         public async Task<IActionResult> Login(string username, string password)
@@ -284,7 +322,6 @@ namespace MyApiProject.Controllers
             }
         }
 
-
         [HttpGet("comments/{id}")]
         public async Task<IActionResult> GetComment(int id)
         {
@@ -323,8 +360,8 @@ namespace MyApiProject.Controllers
 
             _context.Comments.Remove(comment);
         }
-
     }
+
     public class NotificationRequest
     {
         public string Title { get; set; }
@@ -338,5 +375,4 @@ namespace MyApiProject.Controllers
         public string Message { get; set; }
         public string Title { get; set; }  // Add the Title property
     }
-
 }

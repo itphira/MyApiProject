@@ -16,4 +16,7 @@ public class Notification
     
     [Column("company_id")]
     public int CompanyId { get; set; }
+    
+    [Column("is_read")]
+    public bool IsRead { get; set; }
 }
