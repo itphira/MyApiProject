@@ -14,9 +14,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Register NotificationService as a singleton
 builder.Services.AddSingleton<NotificationService>();
 
-// Register the background service
-builder.Services.AddHostedService<ArticleMonitorService>();
-
 // Logging setup
 builder.Services.AddLogging(logging =>
 {
