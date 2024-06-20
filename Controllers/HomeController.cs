@@ -8,6 +8,7 @@ using MyApiProject.Services;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using BCrypt.Net;
 
 namespace MyApiProject.Controllers
 {
