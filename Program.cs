@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using MyApiProject.Data;
 using MyApiProject.Services;
 using Microsoft.Extensions.Logging;
-using MyApiProject;
 
 var builder = WebApplication.CreateBuilder(args);
 

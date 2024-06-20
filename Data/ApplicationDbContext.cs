@@ -11,15 +11,14 @@ namespace MyApiProject.Data
         {
         }
 
-         public DbSet<User> usuarios { get; set; }
-         public DbSet<Article> articulos { get; set; }
-         public DbSet<Comment> Comments { get; set; }
-         public DbSet<Company> companies { get; set; }
-         public DbSet<Notification> notifications { get; set; }
+        public DbSet<User> usuarios { get; set; }
+        public DbSet<Article> articulos { get; set; }
+        public DbSet<Comment> Comments { get; set; }
+        public DbSet<Company>companies { get; set; }
+        public DbSet<Notification> notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-
             modelBuilder.Entity<Article>().ToTable("articulos");
             modelBuilder.Entity<Article>().HasKey(a => a.Id);
             modelBuilder.Entity<Article>().Property(a => a.Id).HasColumnName("id");

@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "HYbBl1cLHyx7OCAxEnzDnCCh+r+0A6hww14hCC/zqpJKyKzrHFgOUXruKmyNxoy9dwftRhbC07V6SehLLMGgnQ==",
+  "dgSpecHash": "3kYypMbrM15bCog44Dq7Z1wFDZb0r/S7E+AXxN0aHeCks+EhS6bfik97I5PWZbCqD57EXbEnLo5wQ5/msg5Cgg==",
   "success": true,
   "projectFilePath": "C:\\Users\\it.soporte\\source\\repos\\MyApiProject\\MyApiProject\\MyApiProject.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\it.soporte\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\it.soporte\\.nuget\\packages\\firebaseadmin\\3.0.0\\firebaseadmin.3.0.0.nupkg.sha512",
     "C:\\Users\\it.soporte\\.nuget\\packages\\google.api.gax\\4.8.0\\google.api.gax.4.8.0.nupkg.sha512",
     "C:\\Users\\it.soporte\\.nuget\\packages\\google.api.gax.rest\\4.8.0\\google.api.gax.rest.4.8.0.nupkg.sha512",

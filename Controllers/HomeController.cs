@@ -8,6 +8,7 @@ using MyApiProject.Services;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using BCrypt.Net;
 
 namespace MyApiProject.Controllers
 {
@@ -34,6 +35,74 @@ namespace MyApiProject.Controllers
         public IActionResult GetRoot()
         {
             return Ok("API is running.");
+        }
+
+        // User registration
+        [HttpPost("register")]
+        public async Task<IActionResult> RegisterUser([FromBody] RegisterUserRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
+            {
+                return BadRequest("Username and password are required.");
+            }
+
+            var existingUser = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
+            if (existingUser != null)
+            {
+                return Conflict("Username already exists.");
+            }
+
+            string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
+            var user = new User
+            {
+                username = request.Username,
+                passwordHash = passwordHash
+            };
+
+            _context.usuarios.Add(user);
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "User registered successfully" });
+        }
+
+        // User login
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
+            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.passwordHash))
+            {
+                return Unauthorized(new { Message = "Invalid username or password" });
+            }
+
+            return Ok(new { Message = "Login successful" });
+        }
+
+        // Change password
+        [HttpPost("users/change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
+            if (user == null)
+            {
+                return Unauthorized(new { Message = "Invalid username" });
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.passwordHash))
+            {
+                return Unauthorized(new { Message = "Invalid current password" });
+            }
+
+            if (request.NewPassword != request.ConfirmPassword)
+            {
+                return BadRequest(new { Message = "New password and confirm password do not match" });
+            }
+
+            user.passwordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            _context.Entry(user).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "Password successfully changed" });
         }
 
         // Send notification
@@ -191,11 +260,11 @@ namespace MyApiProject.Controllers
         [HttpGet("login")]
         public async Task<IActionResult> Login(string username, string password)
         {
-            // Check if a user with the given username and password exists
-            var userExists = await _context.usuarios
-                .AnyAsync(u => u.username == username && u.password == password);
+            // Load the user into memory first
+            var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == username);
 
-            if (userExists)
+            // Check if the user exists and if the password is correct
+            if (user != null && BCrypt.Net.BCrypt.Verify(password, user.passwordHash))
             {
                 return Ok(new { Message = "Login successful" });
             }
@@ -203,32 +272,6 @@ namespace MyApiProject.Controllers
             {
                 return Unauthorized(new { Message = "Invalid username or password" });
             }
-        }
-
-        [HttpPost("users/change-password")]
-        public async Task<IActionResult> ChangePassword([FromForm] string username, [FromForm] string currentPassword, [FromForm] string newPassword, [FromForm] string confirmPassword)
-        {
-            var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == username);
-            if (user == null)
-            {
-                return Unauthorized(new { Message = "Invalid username" });
-            }
-
-            if (user.password != currentPassword) // Adjust this line based on your password hashing/salting mechanism
-            {
-                return Unauthorized(new { Message = "Invalid current password" });
-            }
-
-            if (newPassword != confirmPassword)
-            {
-                return BadRequest(new { Message = "New password and confirm password do not match" });
-            }
-
-            user.password = newPassword; // Ensure you hash the password if it's production code
-            _context.Entry(user).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
-            return Ok(new { Message = "Password successfully changed" });
         }
 
         [HttpGet("users")]
@@ -327,6 +370,7 @@ namespace MyApiProject.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
+
         private void DeleteCommentAndReplies(int commentId)
         {
             var comment = _context.Comments.Find(commentId);
@@ -340,6 +384,26 @@ namespace MyApiProject.Controllers
 
             _context.Comments.Remove(comment);
         }
+    }
+
+    public class RegisterUserRequest
+    {
+        public string Username { get; set; }
+        public string Password { get; set; }
+    }
+
+    public class LoginRequest
+    {
+        public string Username { get; set; }
+        public string Password { get; set; }
+    }
+
+    public class ChangePasswordRequest
+    {
+        public string Username { get; set; }
+        public string CurrentPassword { get; set; }
+        public string NewPassword { get; set; }
+        public string ConfirmPassword { get; set; }
     }
 
     public class NotificationRequest
