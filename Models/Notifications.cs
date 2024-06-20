@@ -19,7 +19,4 @@ public class Notification
     
     [Column("is_read")]
     public bool IsRead { get; set; }
-    
-    [Column("user_id")]
-    public int UserId { get; set; }
 }
