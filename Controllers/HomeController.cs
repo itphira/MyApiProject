@@ -61,7 +61,7 @@ namespace MyApiProject.Controllers
                 var user = new User
                 {
                     username = request.Username,
-                    passwordHash = passwordHash
+                    password_hash = passwordHash
                 };
 
                 _logger.LogInformation("Adding user to the database.");
@@ -82,7 +82,7 @@ namespace MyApiProject.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.passwordHash))
+            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.password_hash))
             {
                 return Unauthorized(new { Message = "Invalid username or password" });
             }
@@ -100,7 +100,7 @@ namespace MyApiProject.Controllers
                 return Unauthorized(new { Message = "Invalid username" });
             }
 
-            if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.passwordHash))
+            if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.password_hash))
             {
                 return Unauthorized(new { Message = "Invalid current password" });
             }
@@ -110,7 +110,7 @@ namespace MyApiProject.Controllers
                 return BadRequest(new { Message = "New password and confirm password do not match" });
             }
 
-            user.passwordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.password_hash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
             _context.Entry(user).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
@@ -276,7 +276,7 @@ namespace MyApiProject.Controllers
             var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == username);
 
             // Check if the user exists and if the password is correct
-            if (user != null && BCrypt.Net.BCrypt.Verify(password, user.passwordHash))
+            if (user != null && BCrypt.Net.BCrypt.Verify(password, user.password_hash))
             {
                 return Ok(new { Message = "Login successful" });
             }
