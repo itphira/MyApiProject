@@ -73,7 +73,7 @@ namespace MyApiProject.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while registering user.");
-                return StatusCode(500, "Internal server error. Please try again later.");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 
