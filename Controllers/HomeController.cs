@@ -195,19 +195,18 @@ namespace MyApiProject.Controllers
         [HttpGet("login")]
         public async Task<IActionResult> Login(string username, string password)
         {
-            var user = await _context.usuarios
-                .FirstOrDefaultAsync(u => u.username == username && u.password == password);
+            var userExists = await _context.usuarios
+                .AnyAsync(u => u.username == username && u.password == password);
 
-            if (user != null)
+            if (userExists)
             {
-                return Ok(new { Message = "Login successful", UserId = user.id });
+                return Ok(new { Message = "Login successful" });
             }
             else
             {
                 return Unauthorized(new { Message = "Invalid username or password" });
             }
         }
-
 
         [HttpPost("users/change-password")]
         public async Task<IActionResult> ChangePassword([FromForm] string username, [FromForm] string currentPassword, [FromForm] string newPassword, [FromForm] string confirmPassword)
