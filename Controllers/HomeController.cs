@@ -36,8 +36,6 @@ namespace MyApiProject.Controllers
         {
             return Ok("API is running.");
         }
-
-        // User registration
         [HttpPost("register")]
         public async Task<IActionResult> RegisterUser([FromBody] RegisterUserRequest request)
         {
@@ -45,15 +43,19 @@ namespace MyApiProject.Controllers
             {
                 if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
                 {
+                    _logger.LogWarning("Username or password is empty.");
                     return BadRequest("Username and password are required.");
                 }
 
+                _logger.LogInformation("Checking if username exists.");
                 var existingUser = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
                 if (existingUser != null)
                 {
+                    _logger.LogWarning("Username already exists.");
                     return Conflict("Username already exists.");
                 }
 
+                _logger.LogInformation("Hashing password.");
                 string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
                 var user = new User
@@ -62,8 +64,10 @@ namespace MyApiProject.Controllers
                     passwordHash = passwordHash
                 };
 
+                _logger.LogInformation("Adding user to the database.");
                 _context.usuarios.Add(user);
                 await _context.SaveChangesAsync();
+                _logger.LogInformation("User registered successfully.");
                 return Ok(new { Message = "User registered successfully" });
             }
             catch (Exception ex)
@@ -72,7 +76,6 @@ namespace MyApiProject.Controllers
                 return StatusCode(500, "Internal server error. Please try again later.");
             }
         }
-
 
         // User login
         [HttpPost("login")]
