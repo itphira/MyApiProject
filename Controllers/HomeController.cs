@@ -72,18 +72,20 @@ namespace MyApiProject.Controllers
             }
         }
 
-        // Get all notifications
+        // Get all notifications for a specific user
         [HttpGet("notifications")]
-        public async Task<IActionResult> GetNotifications()
+        public async Task<IActionResult> GetNotifications([FromQuery] int userId)
         {
-            var notifications = await _context.notifications.ToListAsync();
+            var notifications = await _context.notifications
+                .Where(n => n.UserId == userId)
+                .ToListAsync();
             return Ok(notifications);
         }
 
         [HttpPost("notifications")]
         public async Task<IActionResult> PostNotification([FromBody] Notification notification)
         {
-            if (notification == null)
+            if (notification == null || notification.UserId <= 0)
             {
                 return BadRequest("Invalid notification data");
             }
@@ -112,13 +114,15 @@ namespace MyApiProject.Controllers
             return Ok(notification);
         }
 
-        // Add endpoint to mark a notification as read
+        // Mark a notification as read for a specific user
         [HttpPut("notifications/markAsRead/{id}")]
-        public async Task<IActionResult> MarkNotificationAsRead(int id)
+        public async Task<IActionResult> MarkNotificationAsRead(int id, [FromQuery] int userId)
         {
             try
             {
-                var notification = await _context.notifications.FindAsync(id);
+                var notification = await _context.notifications
+                    .Where(n => n.Id == id && n.UserId == userId)
+                    .FirstOrDefaultAsync();
                 if (notification == null)
                 {
                     return NotFound();
@@ -191,7 +195,6 @@ namespace MyApiProject.Controllers
         [HttpGet("login")]
         public async Task<IActionResult> Login(string username, string password)
         {
-            // Check if a user with the given username and password exists
             var userExists = await _context.usuarios
                 .AnyAsync(u => u.username == username && u.password == password);
 
@@ -214,7 +217,7 @@ namespace MyApiProject.Controllers
                 return Unauthorized(new { Message = "Invalid username" });
             }
 
-            if (user.password != currentPassword) // Adjust this line based on your password hashing/salting mechanism
+            if (user.password != currentPassword)
             {
                 return Unauthorized(new { Message = "Invalid current password" });
             }
@@ -224,7 +227,7 @@ namespace MyApiProject.Controllers
                 return BadRequest(new { Message = "New password and confirm password do not match" });
             }
 
-            user.password = newPassword; // Ensure you hash the password if it's production code
+            user.password = newPassword;
             _context.Entry(user).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
@@ -262,7 +265,7 @@ namespace MyApiProject.Controllers
         [HttpPost("articles/{articleId}/comments")]
         public async Task<IActionResult> PostComment(int articleId, [FromBody] Comment comment)
         {
-            _logger.LogInformation($"Received comment with ParentId: {comment.ParentId}"); // Log the ParentId
+            _logger.LogInformation($"Received comment with ParentId: {comment.ParentId}");
 
             if (comment == null || comment.ArticleId != articleId)
             {
@@ -275,7 +278,6 @@ namespace MyApiProject.Controllers
                 _context.Comments.Add(comment);
                 await _context.SaveChangesAsync();
 
-                // Send notification if it's a reply
                 if (comment.ParentId.HasValue)
                 {
                     var parentComment = await _context.Comments.FindAsync(comment.ParentId.Value);
@@ -285,8 +287,8 @@ namespace MyApiProject.Controllers
                         {
                             Title = "New Reply to Your Comment",
                             Message = $"{comment.Author} replied to your comment.",
-                            ToUsername = parentComment.Author,  // Corrected property name
-                            FromUsername = comment.Author       // Added property for the sender's username
+                            ToUsername = parentComment.Author,
+                            FromUsername = comment.Author
                         };
 
                         await SendReplyNotification(replyNotificationRequest);
@@ -322,11 +324,12 @@ namespace MyApiProject.Controllers
                 return NotFound();
             }
 
-            DeleteCommentAndReplies(id);  // Recursive deletion function
+            DeleteCommentAndReplies(id);
 
             await _context.SaveChangesAsync();
             return Ok();
         }
+
         private void DeleteCommentAndReplies(int commentId)
         {
             var comment = _context.Comments.Find(commentId);
@@ -335,7 +338,7 @@ namespace MyApiProject.Controllers
             var replies = _context.Comments.Where(c => c.ParentId == commentId).ToList();
             foreach (var reply in replies)
             {
-                DeleteCommentAndReplies(reply.CommentId);  // Recursive call to handle nested replies
+                DeleteCommentAndReplies(reply.CommentId);
             }
 
             _context.Comments.Remove(comment);
@@ -353,6 +356,6 @@ namespace MyApiProject.Controllers
         public string ToUsername { get; set; }
         public string FromUsername { get; set; }
         public string Message { get; set; }
-        public string Title { get; set; }  // Add the Title property
+        public string Title { get; set; }
     }
 }
