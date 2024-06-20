@@ -41,29 +41,38 @@ namespace MyApiProject.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> RegisterUser([FromBody] RegisterUserRequest request)
         {
-            if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
+            try
             {
-                return BadRequest("Username and password are required.");
+                if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
+                {
+                    return BadRequest("Username and password are required.");
+                }
+
+                var existingUser = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
+                if (existingUser != null)
+                {
+                    return Conflict("Username already exists.");
+                }
+
+                string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
+                var user = new User
+                {
+                    username = request.Username,
+                    passwordHash = passwordHash
+                };
+
+                _context.usuarios.Add(user);
+                await _context.SaveChangesAsync();
+                return Ok(new { Message = "User registered successfully" });
             }
-
-            var existingUser = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
-            if (existingUser != null)
+            catch (Exception ex)
             {
-                return Conflict("Username already exists.");
+                _logger.LogError(ex, "Error occurred while registering user.");
+                return StatusCode(500, "Internal server error. Please try again later.");
             }
-
-            string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-
-            var user = new User
-            {
-                username = request.Username,
-                passwordHash = passwordHash
-            };
-
-            _context.usuarios.Add(user);
-            await _context.SaveChangesAsync();
-            return Ok(new { Message = "User registered successfully" });
         }
+
 
         // User login
         [HttpPost("login")]
