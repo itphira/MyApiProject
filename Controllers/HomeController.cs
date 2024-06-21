@@ -94,28 +94,37 @@ namespace MyApiProject.Controllers
         [HttpPost("users/change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
-            var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
-            if (user == null)
+            try
             {
-                return Unauthorized(new { Message = "Invalid username" });
-            }
+                var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
+                if (user == null)
+                {
+                    return Unauthorized(new { Message = "Invalid username" });
+                }
 
-            if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.password_hash))
+                if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.password_hash))
+                {
+                    return Unauthorized(new { Message = "Invalid current password" });
+                }
+
+                if (request.NewPassword != request.ConfirmPassword)
+                {
+                    return BadRequest(new { Message = "New password and confirm password do not match" });
+                }
+
+                user.password_hash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+                _context.Entry(user).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+
+                return Ok(new { Message = "Password successfully changed" });
+            }
+            catch (Exception ex)
             {
-                return Unauthorized(new { Message = "Invalid current password" });
+                _logger.LogError(ex, "Error occurred while changing password.");
+                return StatusCode(500, "Internal server error. Please try again later.");
             }
-
-            if (request.NewPassword != request.ConfirmPassword)
-            {
-                return BadRequest(new { Message = "New password and confirm password do not match" });
-            }
-
-            user.password_hash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-            _context.Entry(user).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
-            return Ok(new { Message = "Password successfully changed" });
         }
+
 
         // Send notification
         [HttpPost("send-notification")]
