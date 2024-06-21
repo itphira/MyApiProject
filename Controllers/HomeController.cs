@@ -96,19 +96,24 @@ namespace MyApiProject.Controllers
         {
             try
             {
+                _logger.LogInformation("Received change password request for user: {Username}", request.Username);
+
                 var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
                 if (user == null)
                 {
+                    _logger.LogWarning("User not found: {Username}", request.Username);
                     return Unauthorized(new { Message = "Invalid username" });
                 }
 
                 if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.password_hash))
                 {
+                    _logger.LogWarning("Invalid current password for user: {Username}", request.Username);
                     return Unauthorized(new { Message = "Invalid current password" });
                 }
 
                 if (request.NewPassword != request.ConfirmPassword)
                 {
+                    _logger.LogWarning("New password and confirm password do not match for user: {Username}", request.Username);
                     return BadRequest(new { Message = "New password and confirm password do not match" });
                 }
 
@@ -116,11 +121,12 @@ namespace MyApiProject.Controllers
                 _context.Entry(user).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
 
+                _logger.LogInformation("Password successfully changed for user: {Username}", request.Username);
                 return Ok(new { Message = "Password successfully changed" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while changing password.");
+                _logger.LogError(ex, "Error occurred while changing password for user: {Username}", request.Username);
                 return StatusCode(500, "Internal server error. Please try again later.");
             }
         }
