@@ -83,30 +83,11 @@ namespace MyApiProject.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
-            if (user == null)
+            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.password_hash))
             {
-                _logger.LogWarning("Login failed: invalid username.");
                 return Unauthorized(new { Message = "Invalid username or password" });
             }
 
-            string decryptedPassword;
-            try
-            {
-                decryptedPassword = EncryptionUtils.Decrypt(user.password_hash);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error decrypting password.");
-                return StatusCode(500, "Internal server error. Please try again later.");
-            }
-
-            if (decryptedPassword != request.Password)
-            {
-                _logger.LogWarning("Login failed: invalid password.");
-                return Unauthorized(new { Message = "Invalid username or password" });
-            }
-
-            _logger.LogInformation("Login successful.");
             return Ok(new { Message = "Login successful" });
         }
 
@@ -119,18 +100,7 @@ namespace MyApiProject.Controllers
                 return Unauthorized(new { Message = "Invalid username" });
             }
 
-            string decryptedPassword;
-            try
-            {
-                decryptedPassword = EncryptionUtils.Decrypt(user.password_hash);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error decrypting password.");
-                return StatusCode(500, "Internal server error. Please try again later.");
-            }
-
-            if (decryptedPassword != request.CurrentPassword)
+            if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.password_hash))
             {
                 return Unauthorized(new { Message = "Invalid current password" });
             }
@@ -140,7 +110,7 @@ namespace MyApiProject.Controllers
                 return BadRequest(new { Message = "New password and confirm password do not match" });
             }
 
-            user.password_hash = EncryptionUtils.Encrypt(request.NewPassword);
+            user.password_hash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
             _context.Entry(user).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
@@ -156,17 +126,7 @@ namespace MyApiProject.Controllers
                 return NotFound("User not found");
             }
 
-            string decryptedPassword;
-            try
-            {
-                decryptedPassword = EncryptionUtils.Decrypt(user.password_hash);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error decrypting password.");
-                return StatusCode(500, "Internal server error. Please try again later.");
-            }
-
+            string decryptedPassword = EncryptionUtils.Decrypt(user.password_hash);
             return Ok(decryptedPassword);
         }
 
@@ -313,7 +273,6 @@ namespace MyApiProject.Controllers
             }
             catch (Exception ex)
             {
-                // Log the exception details to help with debugging
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
@@ -321,10 +280,8 @@ namespace MyApiProject.Controllers
         [HttpGet("login")]
         public async Task<IActionResult> Login(string username, string password)
         {
-            // Load the user into memory first
             var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == username);
 
-            // Check if the user exists and if the password is correct
             if (user != null && BCrypt.Net.BCrypt.Verify(password, user.password_hash))
             {
                 return Ok(new { Message = "Login successful" });
@@ -366,7 +323,7 @@ namespace MyApiProject.Controllers
         [HttpPost("articles/{articleId}/comments")]
         public async Task<IActionResult> PostComment(int articleId, [FromBody] Comment comment)
         {
-            _logger.LogInformation($"Received comment with ParentId: {comment.ParentId}"); // Log the ParentId
+            _logger.LogInformation($"Received comment with ParentId: {comment.ParentId}");
 
             if (comment == null || comment.ArticleId != articleId)
             {
@@ -379,7 +336,6 @@ namespace MyApiProject.Controllers
                 _context.Comments.Add(comment);
                 await _context.SaveChangesAsync();
 
-                // Send notification if it's a reply
                 if (comment.ParentId.HasValue)
                 {
                     var parentComment = await _context.Comments.FindAsync(comment.ParentId.Value);
@@ -389,8 +345,8 @@ namespace MyApiProject.Controllers
                         {
                             Title = "New Reply to Your Comment",
                             Message = $"{comment.Author} replied to your comment.",
-                            ToUsername = parentComment.Author,  // Corrected property name
-                            FromUsername = comment.Author       // Added property for the sender's username
+                            ToUsername = parentComment.Author,
+                            FromUsername = comment.Author
                         };
 
                         await SendReplyNotification(replyNotificationRequest);
@@ -426,7 +382,7 @@ namespace MyApiProject.Controllers
                 return NotFound();
             }
 
-            DeleteCommentAndReplies(id);  // Recursive deletion function
+            DeleteCommentAndReplies(id);
 
             await _context.SaveChangesAsync();
             return Ok();
@@ -440,7 +396,7 @@ namespace MyApiProject.Controllers
             var replies = _context.Comments.Where(c => c.ParentId == commentId).ToList();
             foreach (var reply in replies)
             {
-                DeleteCommentAndReplies(reply.CommentId);  // Recursive call to handle nested replies
+                DeleteCommentAndReplies(reply.CommentId);
             }
 
             _context.Comments.Remove(comment);
@@ -478,6 +434,6 @@ namespace MyApiProject.Controllers
         public string ToUsername { get; set; }
         public string FromUsername { get; set; }
         public string Message { get; set; }
-        public string Title { get; set; }  // Add the Title property
+        public string Title { get; set; }
     }
 }
