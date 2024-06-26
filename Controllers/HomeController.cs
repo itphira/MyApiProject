@@ -411,6 +411,19 @@ namespace MyApiProject.Controllers
 
             _context.Comments.Remove(comment);
         }
+
+        [HttpGet("users/password")]
+        public async Task<IActionResult> GetUserPassword(string username)
+        {
+            var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == username);
+            if (user == null)
+            {
+                return NotFound(new { Message = "User not found" });
+            }
+
+            return Ok(user.password_hash);
+        }
+
     }
 
     public class RegisterUserRequest
