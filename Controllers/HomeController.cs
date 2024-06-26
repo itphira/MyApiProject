@@ -38,29 +38,44 @@ namespace MyApiProject.Controllers
             return Ok("API is running.");
         }
 
-        [HttpPost("users/check-password")]
-        public async Task<IActionResult> CheckUserPassword([FromBody] CheckPasswordRequest request)
+        [HttpPost("register")]
+        public async Task<IActionResult> RegisterUser([FromBody] RegisterUserRequest request)
         {
             try
             {
-                // Verify the admin password first
-                if (request.AdminPassword != "Blanco+Pino#34")
+                if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
                 {
-                    return Unauthorized("Invalid admin password.");
+                    _logger.LogWarning("Username or password is empty.");
+                    return BadRequest("Username and password are required.");
                 }
 
-                var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
-                if (user == null)
+                _logger.LogInformation("Checking if username exists.");
+                var existingUser = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
+                if (existingUser != null)
                 {
-                    return NotFound("User not found.");
+                    _logger.LogWarning("Username already exists.");
+                    return Conflict("Username already exists.");
                 }
 
-                return Ok(new { Password = "Password verification is only possible, not retrieval." });
+                _logger.LogInformation("Encrypting password.");
+                string encryptedPassword = EncryptionUtils.Encrypt(request.Password);
+
+                var user = new User
+                {
+                    username = request.Username,
+                    password_hash = encryptedPassword
+                };
+
+                _logger.LogInformation("Adding user to the database.");
+                _context.usuarios.Add(user);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("User registered successfully.");
+                return Ok(new { Message = "User registered successfully" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while checking user password.");
-                return StatusCode(500, new { Message = "Internal server error. Please try again later.", Detail = ex.Message });
+                _logger.LogError(ex, "Error occurred while registering user.");
+                return StatusCode(500, "Internal server error. Please try again later.");
             }
         }
 
