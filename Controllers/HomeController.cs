@@ -175,12 +175,12 @@ namespace MyApiProject.Controllers
                 catch (FormatException ex)
                 {
                     _logger.LogError(ex, "Format error occurred while decrypting password for user: {Username}. Encrypted value: {EncryptedValue}", request.Username, user.password_hash);
-                    return StatusCode(500, new { Message = "Format error. Please try again later.", Detail = ex.Message });
+                    return StatusCode(500, "Format error. Please try again later.");
                 }
                 catch (CryptographicException ex)
                 {
                     _logger.LogError(ex, "Cryptographic error occurred while decrypting password for user: {Username}. Encrypted value: {EncryptedValue}", request.Username, user.password_hash);
-                    return StatusCode(500, new { Message = "Cryptographic error. Please try again later.", Detail = ex.Message });
+                    return StatusCode(500, "Cryptographic error. Please try again later.");
                 }
 
                 return Ok(new { Password = decryptedPassword });
@@ -188,10 +188,9 @@ namespace MyApiProject.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while checking user password.");
-                return StatusCode(500, new { Message = "Internal server error. Please try again later.", Detail = ex.Message });
+                return StatusCode(500, "Internal server error. Please try again later.");
             }
         }
-
 
         [HttpPost("send-notification")]
         public async Task<IActionResult> SendNotification([FromBody] NotificationRequest request)
