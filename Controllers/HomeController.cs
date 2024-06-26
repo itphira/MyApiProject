@@ -55,13 +55,13 @@ namespace MyApiProject.Controllers
                     return Conflict("Username already exists.");
                 }
 
-                _logger.LogInformation("Hashing password.");
-                string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+                _logger.LogInformation("Encrypting password.");
+                string encryptedPassword = EncryptionUtils.Encrypt(request.Password);
 
                 var user = new User
                 {
                     username = request.Username,
-                    password_hash = passwordHash
+                    password_hash = encryptedPassword
                 };
 
                 _logger.LogInformation("Adding user to the database.");
@@ -413,17 +413,31 @@ namespace MyApiProject.Controllers
         }
 
         [HttpGet("users/password")]
-        public async Task<IActionResult> GetUserPassword(string username)
+        public async Task<IActionResult> GetUserPassword(string username, string adminPassword)
         {
+            if (adminPassword != "Blanco+Pino#34")
+            {
+                return Unauthorized(new { Message = "Invalid admin password" });
+            }
+
             var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == username);
             if (user == null)
             {
                 return NotFound(new { Message = "User not found" });
             }
 
-            string decodedPassword = BCrypt.Net.BCrypt.HashPassword(user.password_hash); // Ensure this decodes the password correctly
+            string decryptedPassword;
+            try
+            {
+                decryptedPassword = EncryptionUtils.Decrypt(user.password_hash);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error decrypting password.");
+                return StatusCode(500, "Internal server error. Please try again later.");
+            }
 
-            return Ok(decodedPassword);
+            return Ok(new { Password = decryptedPassword });
         }
 
 
