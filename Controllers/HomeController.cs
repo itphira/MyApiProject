@@ -8,7 +8,6 @@ using MyApiProject.Services;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using BCrypt.Net;
 
 namespace MyApiProject.Controllers
 {
@@ -36,6 +35,7 @@ namespace MyApiProject.Controllers
         {
             return Ok("API is running.");
         }
+
         [HttpPost("register")]
         public async Task<IActionResult> RegisterUser([FromBody] RegisterUserRequest request)
         {
@@ -208,7 +208,6 @@ namespace MyApiProject.Controllers
             return Ok(notification);
         }
 
-        // Add endpoint to mark a notification as read
         [HttpPut("notifications/markAsRead/{id}")]
         public async Task<IActionResult> MarkNotificationAsRead(int id)
         {
@@ -279,7 +278,6 @@ namespace MyApiProject.Controllers
             }
             catch (Exception ex)
             {
-                // Log the exception details to help with debugging
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
@@ -287,10 +285,8 @@ namespace MyApiProject.Controllers
         [HttpGet("login")]
         public async Task<IActionResult> Login(string username, string password)
         {
-            // Load the user into memory first
             var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == username);
 
-            // Check if the user exists and if the password is correct
             if (user != null && BCrypt.Net.BCrypt.Verify(password, user.password_hash))
             {
                 return Ok(new { Message = "Login successful" });
@@ -332,7 +328,7 @@ namespace MyApiProject.Controllers
         [HttpPost("articles/{articleId}/comments")]
         public async Task<IActionResult> PostComment(int articleId, [FromBody] Comment comment)
         {
-            _logger.LogInformation($"Received comment with ParentId: {comment.ParentId}"); // Log the ParentId
+            _logger.LogInformation($"Received comment with ParentId: {comment.ParentId}");
 
             if (comment == null || comment.ArticleId != articleId)
             {
@@ -345,7 +341,6 @@ namespace MyApiProject.Controllers
                 _context.Comments.Add(comment);
                 await _context.SaveChangesAsync();
 
-                // Send notification if it's a reply
                 if (comment.ParentId.HasValue)
                 {
                     var parentComment = await _context.Comments.FindAsync(comment.ParentId.Value);
@@ -355,8 +350,8 @@ namespace MyApiProject.Controllers
                         {
                             Title = "New Reply to Your Comment",
                             Message = $"{comment.Author} replied to your comment.",
-                            ToUsername = parentComment.Author,  // Corrected property name
-                            FromUsername = comment.Author       // Added property for the sender's username
+                            ToUsername = parentComment.Author,
+                            FromUsername = comment.Author
                         };
 
                         await SendReplyNotification(replyNotificationRequest);
@@ -392,7 +387,7 @@ namespace MyApiProject.Controllers
                 return NotFound();
             }
 
-            DeleteCommentAndReplies(id);  // Recursive deletion function
+            DeleteCommentAndReplies(id);
 
             await _context.SaveChangesAsync();
             return Ok();
@@ -406,7 +401,7 @@ namespace MyApiProject.Controllers
             var replies = _context.Comments.Where(c => c.ParentId == commentId).ToList();
             foreach (var reply in replies)
             {
-                DeleteCommentAndReplies(reply.CommentId);  // Recursive call to handle nested replies
+                DeleteCommentAndReplies(reply.CommentId);
             }
 
             _context.Comments.Remove(comment);
@@ -417,7 +412,6 @@ namespace MyApiProject.Controllers
         {
             try
             {
-                // Verify the admin password first
                 if (request.AdminPassword != "Blanco+Pino#34")
                 {
                     return Unauthorized("Invalid admin password.");
@@ -429,7 +423,7 @@ namespace MyApiProject.Controllers
                     return NotFound("User not found.");
                 }
 
-                string decodedPassword = BCrypt.Net.BCrypt.HashPassword(user.password_hash); // Ensure this decodes the password correctly
+                string decodedPassword = EncryptionUtils.Decrypt(user.password_hash);
 
                 return Ok(decodedPassword);
             }
@@ -439,14 +433,6 @@ namespace MyApiProject.Controllers
                 return StatusCode(500, new { Message = "Internal server error. Please try again later.", Detail = ex.Message });
             }
         }
-
-
-    }
-
-    public class CheckPasswordRequest
-    {
-        public string Username { get; set; }
-        public string AdminPassword { get; set; }
     }
 
     public class RegisterUserRequest
@@ -480,6 +466,12 @@ namespace MyApiProject.Controllers
         public string ToUsername { get; set; }
         public string FromUsername { get; set; }
         public string Message { get; set; }
-        public string Title { get; set; }  // Add the Title property
+        public string Title { get; set; }
+    }
+
+    public class CheckPasswordRequest
+    {
+        public string Username { get; set; }
+        public string AdminPassword { get; set; }
     }
 }

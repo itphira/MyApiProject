@@ -1,52 +1,50 @@
+using System;
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
-public class EncryptionUtils
+public static class EncryptionUtils
 {
-    private static readonly string Key = "your-encryption-key"; // Use a secure key
-    private static readonly string IV = "your-initialization-vector"; // Use a secure IV
+    private static readonly byte[] Key = Encoding.UTF8.GetBytes("your-32-char-secret-key-goes-here");
+    private static readonly byte[] IV = Encoding.UTF8.GetBytes("your-16-char-IV-goes-here");
 
     public static string Encrypt(string plainText)
     {
-        using (Aes aes = Aes.Create())
+        using (var aesAlg = Aes.Create())
         {
-            aes.Key = Encoding.UTF8.GetBytes(Key);
-            aes.IV = Encoding.UTF8.GetBytes(IV);
+            aesAlg.Key = Key;
+            aesAlg.IV = IV;
 
-            ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+            var encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
 
-            using (MemoryStream ms = new MemoryStream())
+            using (var msEncrypt = new MemoryStream())
             {
-                using (CryptoStream cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
+                using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                using (var swEncrypt = new StreamWriter(csEncrypt))
                 {
-                    using (StreamWriter sw = new StreamWriter(cs))
-                    {
-                        sw.Write(plainText);
-                    }
-                    return Convert.ToBase64String(ms.ToArray());
+                    swEncrypt.Write(plainText);
                 }
+                return Convert.ToBase64String(msEncrypt.ToArray());
             }
         }
     }
 
     public static string Decrypt(string cipherText)
     {
-        using (Aes aes = Aes.Create())
+        var fullCipher = Convert.FromBase64String(cipherText);
+
+        using (var aesAlg = Aes.Create())
         {
-            aes.Key = Encoding.UTF8.GetBytes(Key);
-            aes.IV = Encoding.UTF8.GetBytes(IV);
+            aesAlg.Key = Key;
+            aesAlg.IV = IV;
 
-            ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+            var decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
 
-            using (MemoryStream ms = new MemoryStream(Convert.FromBase64String(cipherText)))
+            using (var msDecrypt = new MemoryStream(fullCipher))
+            using (var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+            using (var srDecrypt = new StreamReader(csDecrypt))
             {
-                using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
-                {
-                    using (StreamReader sr = new StreamReader(cs))
-                    {
-                        return sr.ReadToEnd();
-                    }
-                }
+                return srDecrypt.ReadToEnd();
             }
         }
     }
