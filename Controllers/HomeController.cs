@@ -147,35 +147,28 @@ namespace MyApiProject.Controllers
             return Ok(new { Message = "Password successfully changed" });
         }
 
-        [HttpPost("users/check-password")]
-        public async Task<IActionResult> CheckUserPassword([FromBody] CheckPasswordRequest request)
+        [HttpGet("users/password")]
+        public async Task<IActionResult> GetUserPassword(string username)
         {
+            var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == username);
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            string decryptedPassword;
             try
             {
-                // Verify the admin password first
-                if (request.AdminPassword != "Blanco+Pino#34")
-                {
-                    return Unauthorized("Invalid admin password.");
-                }
-
-                var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
-                if (user == null)
-                {
-                    return NotFound("User not found.");
-                }
-
-                // Assuming the password is stored encrypted, we need to decrypt it
-                string decryptedPassword = EncryptionUtils.Decrypt(user.password_hash);
-
-                return Ok(new { Password = decryptedPassword });
+                decryptedPassword = EncryptionUtils.Decrypt(user.password_hash);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while checking user password.");
+                _logger.LogError(ex, "Error decrypting password.");
                 return StatusCode(500, "Internal server error. Please try again later.");
             }
-        }
 
+            return Ok(decryptedPassword);
+        }
 
         [HttpPost("send-notification")]
         public async Task<IActionResult> SendNotification([FromBody] NotificationRequest request)
@@ -486,11 +479,5 @@ namespace MyApiProject.Controllers
         public string FromUsername { get; set; }
         public string Message { get; set; }
         public string Title { get; set; }  // Add the Title property
-    }
-
-    public class CheckPasswordRequest
-    {
-        public string Username { get; set; }
-        public string AdminPassword { get; set; }
     }
 }
