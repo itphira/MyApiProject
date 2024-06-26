@@ -421,8 +421,11 @@ namespace MyApiProject.Controllers
                 return NotFound(new { Message = "User not found" });
             }
 
-            return Ok(user.password_hash);
+            string decodedPassword = BCrypt.Net.BCrypt.HashPassword(user.password_hash); // Ensure this decodes the password correctly
+
+            return Ok(decodedPassword);
         }
+
 
     }
 
