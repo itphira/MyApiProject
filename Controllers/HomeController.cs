@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using MyApiProject.Data;
 using MyApiProject.Models;
 using MyApiProject.Services;
+using MyApiProject.Utils;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -165,25 +166,19 @@ namespace MyApiProject.Controllers
                 }
 
                 // Assuming the password is stored encrypted, we need to decrypt it
-                string decryptedPassword;
-                try
-                {
-                    _logger.LogInformation("Attempting to decrypt password for user: {Username}", request.Username);
-                    decryptedPassword = EncryptionUtils.Decrypt(user.password_hash);
-                    _logger.LogInformation("Password decrypted successfully for user: {Username}", request.Username);
-                }
-                catch (FormatException ex)
-                {
-                    _logger.LogError(ex, "Format error occurred while decrypting password for user: {Username}. Encrypted value: {EncryptedValue}", request.Username, user.password_hash);
-                    return StatusCode(500, "Format error. Please try again later.");
-                }
-                catch (CryptographicException ex)
-                {
-                    _logger.LogError(ex, "Cryptographic error occurred while decrypting password for user: {Username}. Encrypted value: {EncryptedValue}", request.Username, user.password_hash);
-                    return StatusCode(500, "Cryptographic error. Please try again later.");
-                }
+                string decryptedPassword = EncryptionUtils.Decrypt(user.password_hash);
 
                 return Ok(new { Password = decryptedPassword });
+            }
+            catch (CryptographicException ex)
+            {
+                _logger.LogError(ex, "Cryptographic error occurred while checking user password.");
+                return StatusCode(500, "Cryptographic error. Please try again later.");
+            }
+            catch (FormatException ex)
+            {
+                _logger.LogError(ex, "Format error occurred while checking user password.");
+                return StatusCode(500, "Format error. Please try again later.");
             }
             catch (Exception ex)
             {
