@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using MyApiProject.Data;
 using MyApiProject.Models;
 using MyApiProject.Services;
+using MyApiProject.Utils;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -36,6 +37,7 @@ namespace MyApiProject.Controllers
         {
             return Ok("API is running.");
         }
+
         [HttpPost("register")]
         public async Task<IActionResult> RegisterUser([FromBody] RegisterUserRequest request)
         {
@@ -55,13 +57,13 @@ namespace MyApiProject.Controllers
                     return Conflict("Username already exists.");
                 }
 
-                _logger.LogInformation("Hashing password.");
-                string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+                _logger.LogInformation("Encrypting password.");
+                string encryptedPassword = EncryptionUtils.Encrypt(request.Password);
 
                 var user = new User
                 {
                     username = request.Username,
-                    password_hash = passwordHash
+                    password_hash = encryptedPassword
                 };
 
                 _logger.LogInformation("Adding user to the database.");
@@ -73,11 +75,10 @@ namespace MyApiProject.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while registering user.");
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, "Internal server error. Please try again later.");
             }
         }
 
-        // User login
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
@@ -90,49 +91,45 @@ namespace MyApiProject.Controllers
             return Ok(new { Message = "Login successful" });
         }
 
-        // Change password
         [HttpPost("users/change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
-            try
+            var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
+            if (user == null)
             {
-                _logger.LogInformation("Received change password request for user: {Username}", request.Username);
-
-                var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
-                if (user == null)
-                {
-                    _logger.LogWarning("User not found: {Username}", request.Username);
-                    return Unauthorized(new { Message = "Invalid username" });
-                }
-
-                if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.password_hash))
-                {
-                    _logger.LogWarning("Invalid current password for user: {Username}", request.Username);
-                    return Unauthorized(new { Message = "Invalid current password" });
-                }
-
-                if (request.NewPassword != request.ConfirmPassword)
-                {
-                    _logger.LogWarning("New password and confirm password do not match for user: {Username}", request.Username);
-                    return BadRequest(new { Message = "New password and confirm password do not match" });
-                }
-
-                user.password_hash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-                _context.Entry(user).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Password successfully changed for user: {Username}", request.Username);
-                return Ok(new { Message = "Password successfully changed" });
+                return Unauthorized(new { Message = "Invalid username" });
             }
-            catch (Exception ex)
+
+            if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.password_hash))
             {
-                _logger.LogError(ex, "Error occurred while changing password for user: {Username}", request.Username);
-                return StatusCode(500, "Internal server error. Please try again later.");
+                return Unauthorized(new { Message = "Invalid current password" });
             }
+
+            if (request.NewPassword != request.ConfirmPassword)
+            {
+                return BadRequest(new { Message = "New password and confirm password do not match" });
+            }
+
+            user.password_hash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            _context.Entry(user).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "Password successfully changed" });
         }
 
+        [HttpGet("users/password")]
+        public async Task<IActionResult> GetUserPassword(string username)
+        {
+            var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == username);
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
 
-        // Send notification
+            string decryptedPassword = EncryptionUtils.Decrypt(user.password_hash);
+            return Ok(decryptedPassword);
+        }
+
         [HttpPost("send-notification")]
         public async Task<IActionResult> SendNotification([FromBody] NotificationRequest request)
         {
@@ -148,7 +145,6 @@ namespace MyApiProject.Controllers
             }
         }
 
-        // Reply notifications
         [HttpPost("send-reply-notification")]
         public async Task<IActionResult> SendReplyNotification([FromBody] ReplyNotificationRequest request)
         {
@@ -168,7 +164,6 @@ namespace MyApiProject.Controllers
             }
         }
 
-        // Get all notifications
         [HttpGet("notifications")]
         public async Task<IActionResult> GetNotifications()
         {
@@ -208,7 +203,6 @@ namespace MyApiProject.Controllers
             return Ok(notification);
         }
 
-        // Add endpoint to mark a notification as read
         [HttpPut("notifications/markAsRead/{id}")]
         public async Task<IActionResult> MarkNotificationAsRead(int id)
         {
@@ -279,7 +273,6 @@ namespace MyApiProject.Controllers
             }
             catch (Exception ex)
             {
-                // Log the exception details to help with debugging
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
@@ -287,10 +280,8 @@ namespace MyApiProject.Controllers
         [HttpGet("login")]
         public async Task<IActionResult> Login(string username, string password)
         {
-            // Load the user into memory first
             var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == username);
 
-            // Check if the user exists and if the password is correct
             if (user != null && BCrypt.Net.BCrypt.Verify(password, user.password_hash))
             {
                 return Ok(new { Message = "Login successful" });
@@ -332,7 +323,7 @@ namespace MyApiProject.Controllers
         [HttpPost("articles/{articleId}/comments")]
         public async Task<IActionResult> PostComment(int articleId, [FromBody] Comment comment)
         {
-            _logger.LogInformation($"Received comment with ParentId: {comment.ParentId}"); // Log the ParentId
+            _logger.LogInformation($"Received comment with ParentId: {comment.ParentId}");
 
             if (comment == null || comment.ArticleId != articleId)
             {
@@ -345,7 +336,6 @@ namespace MyApiProject.Controllers
                 _context.Comments.Add(comment);
                 await _context.SaveChangesAsync();
 
-                // Send notification if it's a reply
                 if (comment.ParentId.HasValue)
                 {
                     var parentComment = await _context.Comments.FindAsync(comment.ParentId.Value);
@@ -355,8 +345,8 @@ namespace MyApiProject.Controllers
                         {
                             Title = "New Reply to Your Comment",
                             Message = $"{comment.Author} replied to your comment.",
-                            ToUsername = parentComment.Author,  // Corrected property name
-                            FromUsername = comment.Author       // Added property for the sender's username
+                            ToUsername = parentComment.Author,
+                            FromUsername = comment.Author
                         };
 
                         await SendReplyNotification(replyNotificationRequest);
@@ -392,7 +382,7 @@ namespace MyApiProject.Controllers
                 return NotFound();
             }
 
-            DeleteCommentAndReplies(id);  // Recursive deletion function
+            DeleteCommentAndReplies(id);
 
             await _context.SaveChangesAsync();
             return Ok();
@@ -406,27 +396,11 @@ namespace MyApiProject.Controllers
             var replies = _context.Comments.Where(c => c.ParentId == commentId).ToList();
             foreach (var reply in replies)
             {
-                DeleteCommentAndReplies(reply.CommentId);  // Recursive call to handle nested replies
+                DeleteCommentAndReplies(reply.CommentId);
             }
 
             _context.Comments.Remove(comment);
         }
-
-        [HttpGet("users/password")]
-        public async Task<IActionResult> GetUserPassword(string username)
-        {
-            var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == username);
-            if (user == null)
-            {
-                return NotFound(new { Message = "User not found" });
-            }
-
-            string decodedPassword = BCrypt.Net.BCrypt.HashPassword(user.password_hash); // Ensure this decodes the password correctly
-
-            return Ok(decodedPassword);
-        }
-
-
     }
 
     public class RegisterUserRequest
@@ -460,6 +434,6 @@ namespace MyApiProject.Controllers
         public string ToUsername { get; set; }
         public string FromUsername { get; set; }
         public string Message { get; set; }
-        public string Title { get; set; }  // Add the Title property
+        public string Title { get; set; }
     }
 }
