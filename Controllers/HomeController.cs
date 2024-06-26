@@ -412,35 +412,41 @@ namespace MyApiProject.Controllers
             _context.Comments.Remove(comment);
         }
 
-        [HttpGet("users/password")]
-        public async Task<IActionResult> GetUserPassword(string username, string adminPassword)
+        [HttpPost("users/password")]
+        public async Task<IActionResult> GetUserPassword([FromBody] CheckPasswordRequest request)
         {
-            if (adminPassword != "Blanco+Pino#34")
-            {
-                return Unauthorized(new { Message = "Invalid admin password" });
-            }
-
-            var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == username);
-            if (user == null)
-            {
-                return NotFound(new { Message = "User not found" });
-            }
-
-            string decryptedPassword;
             try
             {
-                decryptedPassword = EncryptionUtils.Decrypt(user.password_hash);
+                // Verify the admin password first
+                if (request.AdminPassword != "Blanco+Pino#34")
+                {
+                    return Unauthorized("Invalid admin password.");
+                }
+
+                var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
+                if (user == null)
+                {
+                    return NotFound("User not found.");
+                }
+
+                string decodedPassword = BCrypt.Net.BCrypt.HashPassword(user.password_hash); // Ensure this decodes the password correctly
+
+                return Ok(decodedPassword);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error decrypting password.");
-                return StatusCode(500, "Internal server error. Please try again later.");
+                _logger.LogError(ex, "Error occurred while retrieving user password.");
+                return StatusCode(500, new { Message = "Internal server error. Please try again later.", Detail = ex.Message });
             }
-
-            return Ok(new { Password = decryptedPassword });
         }
 
 
+    }
+
+    public class CheckPasswordRequest
+    {
+        public string Username { get; set; }
+        public string AdminPassword { get; set; }
     }
 
     public class RegisterUserRequest
