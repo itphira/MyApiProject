@@ -132,52 +132,6 @@ namespace MyApiProject.Controllers
             return Ok(new { Message = "Password successfully changed" });
         }
 
-        [HttpPost("users/check-password")]
-        public async Task<IActionResult> CheckUserPassword([FromBody] CheckPasswordRequest request)
-        {
-            try
-            {
-                // Verify the admin password first
-                if (request.AdminPassword != "Blanco+Pino#34")
-                {
-                    return Unauthorized("Invalid admin password.");
-                }
-
-                var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
-                if (user == null)
-                {
-                    return NotFound("User not found.");
-                }
-
-                // Assuming the password is stored encrypted, we need to decrypt it
-                string decryptedPassword;
-                try
-                {
-                    _logger.LogInformation("Attempting to decrypt password for user: {Username}", request.Username);
-                    decryptedPassword = EncryptionUtils.Decrypt(user.password_hash);
-                    _logger.LogInformation("Password decrypted successfully for user: {Username}", request.Username);
-                }
-                catch (FormatException ex)
-                {
-                    _logger.LogError(ex, "Format error occurred while decrypting password for user: {Username}. Encrypted value: {EncryptedValue}", request.Username, user.password_hash);
-                    return StatusCode(500, new { Message = "Format error. Please try again later.", Detail = ex.Message });
-                }
-                catch (CryptographicException ex)
-                {
-                    _logger.LogError(ex, "Cryptographic error occurred while decrypting password for user: {Username}. Encrypted value: {EncryptedValue}", request.Username, user.password_hash);
-                    return StatusCode(500, new { Message = "Cryptographic error. Please try again later.", Detail = ex.Message });
-                }
-
-                return Ok(new { Password = decryptedPassword });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while checking user password.");
-                return StatusCode(500, new { Message = "Internal server error. Please try again later.", Detail = ex.Message });
-            }
-        }
-
-
         [HttpPost("send-notification")]
         public async Task<IActionResult> SendNotification([FromBody] NotificationRequest request)
         {
