@@ -10,6 +10,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using BCrypt.Net;
+using System.Security.Cryptography;
 
 namespace MyApiProject.Controllers
 {
@@ -169,13 +170,22 @@ namespace MyApiProject.Controllers
 
                 return Ok(new { Password = decryptedPassword });
             }
+            catch (CryptographicException ex)
+            {
+                _logger.LogError(ex, "Cryptographic error occurred while checking user password.");
+                return StatusCode(500, "Cryptographic error. Please try again later.");
+            }
+            catch (FormatException ex)
+            {
+                _logger.LogError(ex, "Format error occurred while checking user password.");
+                return StatusCode(500, "Format error. Please try again later.");
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while checking user password.");
                 return StatusCode(500, "Internal server error. Please try again later.");
             }
         }
-
 
         [HttpPost("send-notification")]
         public async Task<IActionResult> SendNotification([FromBody] NotificationRequest request)
