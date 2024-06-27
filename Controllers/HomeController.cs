@@ -308,14 +308,26 @@ namespace MyApiProject.Controllers
         {
             var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == username);
 
-            if (user != null && BCrypt.Net.BCrypt.Verify(password, user.password_hash))
+            if (user != null)
             {
-                return Ok(new { Message = "Login successful" });
+                string decryptedPassword;
+                try
+                {
+                    decryptedPassword = EncryptionUtils.Decrypt(user.password_hash);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error decrypting password.");
+                    return StatusCode(500, "Internal server error. Please try again later.");
+                }
+
+                if (decryptedPassword == password)
+                {
+                    return Ok(new { Message = "Login successful" });
+                }
             }
-            else
-            {
-                return Unauthorized(new { Message = "Invalid username or password" });
-            }
+
+            return Unauthorized(new { Message = "Invalid username or password" });
         }
 
         [HttpGet("users")]
