@@ -82,7 +82,23 @@ namespace MyApiProject.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var user = await _context.usuarios.FirstOrDefaultAsync(u => u.username == request.Username);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.password_hash))
+            if (user == null)
+            {
+                return Unauthorized(new { Message = "Invalid username or password" });
+            }
+
+            string decryptedPassword;
+            try
+            {
+                decryptedPassword = EncryptionUtils.Decrypt(user.password_hash);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error decrypting password.");
+                return StatusCode(500, "Internal server error. Please try again later.");
+            }
+
+            if (decryptedPassword != request.Password)
             {
                 return Unauthorized(new { Message = "Invalid username or password" });
             }
@@ -105,19 +121,28 @@ namespace MyApiProject.Controllers
                     return Unauthorized(new { Message = "Invalid username" });
                 }
 
-                if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.password_hash))
+                string decryptedPassword;
+                try
                 {
-                    _logger.LogWarning("Invalid current password for user: {Username}", request.Username);
+                    decryptedPassword = EncryptionUtils.Decrypt(user.password_hash);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error decrypting password.");
+                    return StatusCode(500, "Internal server error. Please try again later.");
+                }
+
+                if (decryptedPassword != request.CurrentPassword)
+                {
                     return Unauthorized(new { Message = "Invalid current password" });
                 }
 
                 if (request.NewPassword != request.ConfirmPassword)
                 {
-                    _logger.LogWarning("New password and confirm password do not match for user: {Username}", request.Username);
                     return BadRequest(new { Message = "New password and confirm password do not match" });
                 }
 
-                user.password_hash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+                user.password_hash = EncryptionUtils.Encrypt(request.NewPassword);
                 _context.Entry(user).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
 
@@ -131,8 +156,6 @@ namespace MyApiProject.Controllers
             }
         }
 
-
-        // Send notification
         [HttpPost("send-notification")]
         public async Task<IActionResult> SendNotification([FromBody] NotificationRequest request)
         {
@@ -148,7 +171,6 @@ namespace MyApiProject.Controllers
             }
         }
 
-        // Reply notifications
         [HttpPost("send-reply-notification")]
         public async Task<IActionResult> SendReplyNotification([FromBody] ReplyNotificationRequest request)
         {
@@ -168,7 +190,6 @@ namespace MyApiProject.Controllers
             }
         }
 
-        // Get all notifications
         [HttpGet("notifications")]
         public async Task<IActionResult> GetNotifications()
         {
@@ -423,9 +444,9 @@ namespace MyApiProject.Controllers
                     return NotFound("User not found.");
                 }
 
-                string decodedPassword = EncryptionUtils.Decrypt(user.password_hash);
+                string decryptedPassword = EncryptionUtils.Decrypt(user.password_hash);
 
-                return Ok(decodedPassword);
+                return Ok(decryptedPassword);
             }
             catch (Exception ex)
             {
