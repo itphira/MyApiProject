@@ -5,8 +5,8 @@ using System.Text;
 
 public static class EncryptionUtils
 {
-    private static readonly byte[] Key = Encoding.UTF8.GetBytes("your-32-char-secret-key-goes-here");
-    private static readonly byte[] IV = Encoding.UTF8.GetBytes("your-16-char-IV-goes-here");
+    private static readonly byte[] Key = Encoding.UTF8.GetBytes("MiContrasenyade32charsQWEASDZXCR");
+    private static readonly byte[] IV = Encoding.UTF8.GetBytes("MiContrasenya16D");
 
     public static string Encrypt(string plainText)
     {
@@ -31,21 +31,30 @@ public static class EncryptionUtils
 
     public static string Decrypt(string cipherText)
     {
-        var fullCipher = Convert.FromBase64String(cipherText);
-
-        using (var aesAlg = Aes.Create())
+        try
         {
-            aesAlg.Key = Key;
-            aesAlg.IV = IV;
+            var fullCipher = Convert.FromBase64String(cipherText);
 
-            var decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
-
-            using (var msDecrypt = new MemoryStream(fullCipher))
-            using (var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
-            using (var srDecrypt = new StreamReader(csDecrypt))
+            using (var aesAlg = Aes.Create())
             {
-                return srDecrypt.ReadToEnd();
+                aesAlg.Key = Key;
+                aesAlg.IV = IV;
+
+                var decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+
+                using (var msDecrypt = new MemoryStream(fullCipher))
+                using (var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                using (var srDecrypt = new StreamReader(csDecrypt))
+                {
+                    // Leer los datos descifrados
+                    return srDecrypt.ReadToEnd();
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            // Manejar errores de descifrado (por ejemplo, clave incorrecta, texto cifrado inválido)
+            return $"Error durante el descifrado: {ex.Message}";
         }
     }
 }
